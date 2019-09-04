@@ -2,15 +2,15 @@
 
 #set -ex
 
-proj=b2013162
-mail=izabela.dobrowolska@slu.se
-in="/proj/$proj/nobackup/sRNA-SE-germinants/fastqc/reaper"
-out="/proj/$proj/nobackup/sRNA-SE-germinants/multiqc/reaper"
+proj=u2019016
+mail=mist0069@student.umu.se
+in=/mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series/RNA-Seq
+out=/mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series/RNA-Seq/multiqc
 
 if [ ! -d $out ]; then
 	mkdir -p $out
 fi
 
-module load bioinfo-tools MultiQC
+module load bioinfo-tools multiqc
 
-sbatch --mail-user=$mail -o $in/multiqc.out -e $in/multiqc.err -A $proj $UPSCb/pipeline/runMultiQC.sh $in $out
+sbatch --mail-user=$mail -o $in/multiqc.out -e $in/multiqc.err -A $proj ../UPSCb-common/pipeline/runMultiQC.sh $in $out
