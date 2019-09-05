@@ -21,7 +21,7 @@ if [ ! -d $out ]; then
 fi
 
 ## for every file
-cd $out
+
 for f in $(find $in -name "*_trimmomatic_1.fq.gz"); do
   fnam=$(basename ${f/_1.fq.gz/})
   
