@@ -39,3 +39,6 @@ rsconnect/
 # emacs backup files
 *~
 
+#Data
+data
+data/

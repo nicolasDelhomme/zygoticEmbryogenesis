@@ -8,11 +8,7 @@
 #'    number_sections: true
 #' ---
 #' # Setup
-#' * Working directory
-setwd("/mnt/picea/projects/aspseq/jfelten/T89-Laccaria-bicolor/January/Salmon")
-#' ```{r set up, echo=FALSE}
-#' knitr::opts_knit$set(root.dir="/mnt/picea/projects/aspseq/jfelten/T89-Laccaria-bicolor/January/Salmon")
-#' ```
+
 
 #' * Libraries
 suppressPackageStartupMessages(library(data.table))
@@ -27,10 +23,11 @@ suppressPackageStartupMessages(library(scatterplot3d))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tximport))
 suppressPackageStartupMessages(library(vsn))
+suppressPackageStartupMessages(library(here))
 
 #' * Helper functions
-source("~/Git/UPSCb/src/R/plot.multidensity.R")
-source("~/Git/UPSCb/src/R/featureSelection.R")
+source(here("UPSCb-common/src/R/plot.multidensity.R"))
+source(here("UPSCb-common/src/R/featureSelection.R"))
 
 #' * Graphics
 pal <- brewer.pal(8,"Dark2")
@@ -38,7 +35,7 @@ hpal <- colorRampPalette(c("blue","white","red"))(100)
 mar <- par("mar")
 
 #' * Metadata
-#' Sample information
+#' Sample information ########### need sample info?
 samples <- read_csv("~/Git/UPSCb/projects/T89-Laccaria-bicolor/doc/Samples.csv") %>% 
   mutate(Time=factor(Time)) %>% 
   mutate(Experiment=factor(Experiment))
@@ -47,12 +44,16 @@ samples <- read_csv("~/Git/UPSCb/projects/T89-Laccaria-bicolor/doc/Samples.csv")
 Potra.tx2gene <- read_delim("/mnt/picea/storage/reference/Populus-tremula/v1.1/annotation/tx2gene.tsv",
                             "\t",col_names=c("TXID","GENE"))
 
+#' gene translation - which annotation should be used, if any? ################
+#Potra.tx2gene <- read_delim("/mnt/picea/storage/reference/Picea-abies/v1.0/annotation/pabies_go_main_filtered_2015_11_26.tsv",
+#                            "\t",col_names=c("TXID","GENE"))
+
 #' # Analysis
-#' ## Raw data
+#' ## Raw data ############## change Lacbi2
 lb.filelist <- list.files("Lacbi2", 
-                    recursive = TRUE, 
-                    pattern = "quant.sf",
-                    full.names = TRUE)
+                          recursive = TRUE, 
+                          pattern = "quant.sf",
+                          full.names = TRUE)
 
 #' Select the samples containing fungi
 stopifnot(all(str_which(basename(lb.filelist),samples$SciLifeID) == 1:nrow(samples)))
@@ -61,7 +62,7 @@ lb.filelist <- lb.filelist[samples$Experiment %in% c("ECM","FLM")]
 
 #' Read the expression at the gene level (there is one transcript per gene)
 lb.g <- suppressMessages(tximport(files = lb.filelist, 
-                                type = "salmon",txOut=TRUE))
+                                  type = "salmon",txOut=TRUE))
 
 counts <- round(lb.g$counts)
 
@@ -110,6 +111,7 @@ ggplot(dat,aes(x=values,group=ind,col=Time)) +
 #' ## Export
 dir.create(file.path("..","analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
 write.csv(counts,file="../analysis/salmon/Lacbi-raw-unormalised-gene-expression_data.csv")
+############## change export location name
 
 #' ## Data normalisation 
 #' ### Preparation
@@ -146,9 +148,9 @@ meanSdPlot(vst[rowSums(counts)>0,])
 #' ## QC on the normalised data
 #' ### PCA
 pc <- prcomp(t(vst))
-  
+
 percent <- round(summary(pc)$importance[2,]*100)
-  
+
 #' ### 3 first dimensions
 #' This looks interesting as the sample separate clearly both by Experiment
 #' and Time in the first 2 components.
@@ -185,8 +187,8 @@ ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment)) +
 #' A cutoff at a VST value of 1 leaves about 15000 genes, which is adequate for the QA
 conds <- factor(paste(samples$Experiment,samples$Time))[s.sel]
 sels <- rangeFeatureSelect(counts=vst,
-                   conditions=conds,
-                   nrep=3)
+                           conditions=conds,
+                           nrep=3)
 
 #' * Heatmap of "all" genes
 #' Taking into account all the genes (above a noise thresholds), the samples cluster
