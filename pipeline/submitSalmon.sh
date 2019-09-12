@@ -26,7 +26,7 @@ for f in $(find $in -name "*_trimmomatic_1.fq.gz"); do
   fnam=$(basename ${f/_1.fq.gz/})
   
   ## execute
- sbatch -A $proj --mail-user=$mail \
+sbatch -A $proj --mail-user=$mail \
   -e $out/$fnam.err -o $out/$fnam.out -J salmon.$fnam \
   ../UPSCb-common/pipeline/runSalmon.sh -b $bind \
   -i $img $ref $f $in/${fnam}_2.fq.gz $out

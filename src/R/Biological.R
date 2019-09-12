@@ -36,29 +36,55 @@ mar <- par("mar")
 
 #' * Metadata
 #' Sample information ########### need sample info?
-samples <- read_csv("~/Git/UPSCb/projects/T89-Laccaria-bicolor/doc/Samples.csv") %>% 
-  mutate(Time=factor(Time)) %>% 
-  mutate(Experiment=factor(Experiment))
+samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/testmerge_complete_v3.csv",
+                    col_types = cols(col_character(),
+                                     col_character(),
+                                     col_factor(),
+                                     col_character(),
+                                     col_factor(),
+                                     col_character(),
+                                     col_double(),
+                                     col_double())) 
 
-#' tx2gene translation
-Potra.tx2gene <- read_delim("/mnt/picea/storage/reference/Populus-tremula/v1.1/annotation/tx2gene.tsv",
-                            "\t",col_names=c("TXID","GENE"))
-
-#' gene translation - which annotation should be used, if any? ################
-#Potra.tx2gene <- read_delim("/mnt/picea/storage/reference/Picea-abies/v1.0/annotation/pabies_go_main_filtered_2015_11_26.tsv",
-#                            "\t",col_names=c("TXID","GENE"))
+##%>% 
+  ##mutate(Tissue=factor(Tissue)) ##%>% 
+  ##mutate(Time=factor(Time))
 
 #' # Analysis
-#' ## Raw data ############## change Lacbi2
-lb.filelist <- list.files("Lacbi2", 
+#' ## Raw data
+lb.filelist <- list.files(here("data/RNA-Seq/salmon"), 
                           recursive = TRUE, 
-                          pattern = "quant.sf",
+                          pattern = "1_sortmerna_trimmomatic.out",
                           full.names = TRUE)
+print(lb.filelist)
+##missing one - the one that has no NGI.ID - in trimmomatic salmon folder
 
-#' Select the samples containing fungi
-stopifnot(all(str_which(basename(lb.filelist),samples$SciLifeID) == 1:nrow(samples)))
-names(lb.filelist) <- samples$SciLifeID
-lb.filelist <- lb.filelist[samples$Experiment %in% c("ECM","FLM")]
+
+#' Select the samples containing fungi CHANGE THIS
+##this works
+stopifnot(all(str_which(basename(lb.filelist),samples$NGI.ID) == 1:nrow(samples)))
+
+##testing
+#str_detect(basename(lb.filelist),samples$NGI.ID)
+#match(lb.filelist, samples$NGI.ID)
+#print(samples$NGI.ID)
+#print(basename(lb.filelist))
+#match(basename(lb.filelist),samples$NGI.ID)
+
+
+
+
+
+
+
+
+
+names(lb.filelist) <- samples$NGI.ID
+lb.filelist <- lb.filelist[samples$NGI.ID %in% c("ECM","FLM")] ##%in% is match(), ECM and FLM need to be replaced?
+
+
+
+
 
 #' Read the expression at the gene level (there is one transcript per gene)
 lb.g <- suppressMessages(tximport(files = lb.filelist, 
@@ -74,9 +100,10 @@ sprintf("%s%% percent (%s) of %s genes are not expressed",
         sum(sel),
         nrow(counts))
 
+##CHANGE META DATA THIS IS BEING USED TO MATCH OUR DATA
 ggplot(tibble(x=colnames(counts),y=colSums(counts)) %>% 
-         bind_cols(samples[match(names(lb.filelist),samples$SciLifeID),]),
-       aes(x,y,col=Experiment,fill=Time)) + geom_col() + 
+         bind_cols(samples[match(names(lb.filelist),samples$NGI.ID),]),
+       aes(x,y,col=User.ID,fill=Time)) + geom_col() + 
   scale_y_continuous(name="reads") +
   theme(axis.text.x=element_text(angle=90),axis.title.x=element_blank())
 
@@ -95,11 +122,11 @@ ggplot(melt(log10(rowMeans(counts))),aes(x=value)) +
 #' samples colored by condition. The gene coverage 
 #' across samples is extremely similar
 dat <- as.data.frame(log10(counts)) %>% utils::stack() %>% 
-  mutate(Experiment=samples$Experiment[match(ind,samples$SciLifeID)]) %>% 
-  mutate(Time=samples$Time[match(ind,samples$SciLifeID)])
+  mutate(Experiment=samples$User.ID[match(ind,samples$NGI.ID)]) %>% 
+  mutate(Time=samples$Time[match(ind,samples$NGI.ID)])
 
 #' Color by Experiment
-ggplot(dat,aes(x=values,group=ind,col=Experiment)) + 
+ggplot(dat,aes(x=values,group=ind,col=User.ID)) + 
   geom_density() + ggtitle("sample raw counts distribution") +
   scale_x_continuous(name="per gene raw counts (log10)")
 
@@ -110,7 +137,7 @@ ggplot(dat,aes(x=values,group=ind,col=Time)) +
 
 #' ## Export
 dir.create(file.path("..","analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
-write.csv(counts,file="../analysis/salmon/Lacbi-raw-unormalised-gene-expression_data.csv")
+write.csv(counts,file="../analysis/salmon/ZE-unnormalised-gene-expression_data.csv")
 ############## change export location name
 
 #' ## Data normalisation 
@@ -118,13 +145,13 @@ write.csv(counts,file="../analysis/salmon/Lacbi-raw-unormalised-gene-expression_
 #' For visualization, the data is submitted to a variance stabilization
 #' transformation using DESeq2. The dispersion is estimated independently
 #' of the sample tissue and replicate
-s.sel <- match(colnames(counts),samples$SciLifeID)
+s.sel <- match(colnames(counts),samples$NGI.ID)
 dds <- DESeqDataSetFromMatrix(
   countData = counts,
   colData = samples[s.sel,],
-  design = ~ Experiment * Time)
+  design = ~ User.ID * Time)
 
-save(dds,file="../analysis/salmon/Lacbi-dds.rda")
+save(dds,file="../analysis/salmon/ZE-dds.rda")
 
 #' Check the size factors (i.e. the sequencing library size effect)
 #' 
@@ -162,13 +189,13 @@ scatterplot3d(pc$x[,1],
               ylab=paste("Comp. 2 (",percent[2],"%)",sep=""),
               zlab=paste("Comp. 3 (",percent[3],"%)",sep=""),
               color=pal[as.integer(samples$Time)[s.sel]],
-              pch=c(17,19)[as.integer(samples$Experiment)[s.sel]-1])
+              pch=c(17,19)[as.integer(samples$User.ID)[s.sel]-1])
 legend("topleft",
        fill=pal[1:nlevels(samples$Time)],
        legend=levels(samples$Time))
 legend("bottomright",
        pch=c(17,19),
-       legend=levels(samples$Experiment)[-1])
+       legend=levels(samples$User.ID)[-1])
 par(mar=mar)
 
 #' ### 2D
@@ -176,7 +203,7 @@ pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
                     samples[s.sel,])
 
-ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment)) + 
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=User.ID)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
   scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
@@ -185,7 +212,7 @@ ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment)) +
 #' ### Heatmap
 #' Filter for noise
 #' A cutoff at a VST value of 1 leaves about 15000 genes, which is adequate for the QA
-conds <- factor(paste(samples$Experiment,samples$Time))[s.sel]
+conds <- factor(paste(samples$User.ID,samples$Time))[s.sel]
 sels <- rangeFeatureSelect(counts=vst,
                            conditions=conds,
                            nrep=3)
@@ -244,7 +271,7 @@ heatmap.2(t(scale(t(vst[sels[[2]],][ord,]))),
           labCol = conds,
           col=hpal)
 
-#' ## Conclusion
+#' ## Conclusion ###################### make separate notes for this.
 #' The quality of the data is good. The PCA shows that the samples cluster by experiment and time, 
 #' however, the heatmap shows a clustering that correlates with the mapping rates, _i.e._ the mixed 
 #' amount of reads originating from either organism. The final heatmap seem to indicate that this 

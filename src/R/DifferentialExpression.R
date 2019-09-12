@@ -24,8 +24,8 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(VennDiagram))
 
 #' * Helper files
-suppressMessages(source("~/Git/UPSCb/src/R/plotMA.R"))
-suppressMessages(source("~/Git/UPSCb/src/R/volcanoPlot.R"))
+suppressMessages(source("~/Git/zygoticEmbryogenesis/src/R/plotMA.R"))
+suppressMessages(source("~/Git/zygoticEmbryogenesis/src/R/volcanoPlot.R"))
 
 #' * Graphics
 pal=brewer.pal(8,"Dark2")
@@ -97,6 +97,7 @@ mar <- par("mar")
 #' # Analysis
 #' * Data
 load("analysis/salmon/Lacbi-all-dds.rda")
+##############change file directory?
 
 #' ## Normalisation for visualisation
 vsd <- varianceStabilizingTransformation(dds,blind=FALSE)
