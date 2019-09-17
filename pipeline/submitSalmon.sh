@@ -12,8 +12,8 @@ bind=/mnt:/mnt
 img=/mnt/picea/projects/singularity/salmon-0.14.1.simg 
 
 ## Zygotic
-in=/mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series/RNA-Seq/trimmomatic
-out=/mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series/RNA-Seq/salmon
+in=/mnt/picea/projects/spruce/uegertsdotter/29_Spruce_Seeds_Project/trimmomatic
+out=/mnt/picea/projects/spruce/uegertsdotter/29_Spruce_Seeds_Project/salmon
 
 ## create the out dir
 if [ ! -d $out ]; then

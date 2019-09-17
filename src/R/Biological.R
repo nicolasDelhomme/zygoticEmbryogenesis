@@ -30,7 +30,7 @@ source(here("UPSCb-common/src/R/plot.multidensity.R"))
 source(here("UPSCb-common/src/R/featureSelection.R"))
 
 #' * Graphics
-pal <- brewer.pal(8,"Dark2")
+pal <- brewer.pal(12,"Paired")
 hpal <- colorRampPalette(c("blue","white","red"))(100)
 mar <- par("mar")
 
@@ -44,68 +44,57 @@ samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/testmerge_complete_v3.csv",
                                      col_factor(),
                                      col_character(),
                                      col_double(),
-                                     col_double())) 
-
-##%>% 
-  ##mutate(Tissue=factor(Tissue)) ##%>% 
-  ##mutate(Time=factor(Time))
+                                     col_double())) %>% 
+  mutate(Tissue=factor(Tissue)) %>% 
+  mutate(Time=factor(Time))
 
 #' # Analysis
 #' ## Raw data
 lb.filelist <- list.files(here("data/RNA-Seq/salmon"), 
                           recursive = TRUE, 
-                          pattern = "1_sortmerna_trimmomatic.out",
+                          pattern = "quant.sf",
                           full.names = TRUE)
-print(lb.filelist)
-##missing one - the one that has no NGI.ID - in trimmomatic salmon folder
 
+#' Filter and select only one duplicate from each sample.
+lb.filterlist <- str_subset(lb.filelist,"L001_sortmerna_trimmomatic")
 
-#' Select the samples containing fungi CHANGE THIS
-##this works
-stopifnot(all(str_which(basename(lb.filelist),samples$NGI.ID) == 1:nrow(samples)))
-
-##testing
-#str_detect(basename(lb.filelist),samples$NGI.ID)
-#match(lb.filelist, samples$NGI.ID)
-#print(samples$NGI.ID)
-#print(basename(lb.filelist))
-#match(basename(lb.filelist),samples$NGI.ID)
-
-
-
-
-
-
-
-
-
-names(lb.filelist) <- samples$NGI.ID
-lb.filelist <- lb.filelist[samples$NGI.ID %in% c("ECM","FLM")] ##%in% is match(), ECM and FLM need to be replaced?
-
-
-
+#removed P11562_112 trimmomatic dataset
+lb.filterlist <- (str_subset(lb.filterlist, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/RNA-Seq/salmon/P11562_112_S11_L001_sortmerna_trimmomatic/quant.sf", negate = TRUE))
+#removed P11562_112 row from sample list
+samples <- filter(samples, !grepl("112",NGI.ID))
+stopifnot(all(str_which(lb.filterlist, samples$NGI.ID) == 1:length(lb.filterlist)))
+##assign names to the filtered filelist (which removed L002)
+names(lb.filterlist) <- samples$NGI.ID
+lb.filterlist <- lb.filterlist[samples$Tissue %in% c("ZE","FMG","S")] ##Are we only looking at ZE?
 
 
 #' Read the expression at the gene level (there is one transcript per gene)
-lb.g <- suppressMessages(tximport(files = lb.filelist, 
+lb.g <- suppressMessages(tximport(files = lb.filterlist, 
                                   type = "salmon",txOut=TRUE))
 
 counts <- round(lb.g$counts)
 
 #' ## Raw Data QC analysis
-#' Check how many genes are never expressed
+#' Check how many genes are never expressed - reasonable level of non-expressed genes indicated.
 sel <- rowSums(counts) == 0
 sprintf("%s%% percent (%s) of %s genes are not expressed",
         round(sum(sel) * 100/ nrow(counts),digits=1),
         sum(sel),
         nrow(counts))
 
-##CHANGE META DATA THIS IS BEING USED TO MATCH OUR DATA
 ggplot(tibble(x=colnames(counts),y=colSums(counts)) %>% 
-         bind_cols(samples[match(names(lb.filelist),samples$NGI.ID),]),
-       aes(x,y,col=User.ID,fill=Time)) + geom_col() + 
+         bind_cols(samples[match(names(lb.filterlist),samples$NGI.ID),]),
+       aes(x,y,col=Tissue,fill=Time)) + geom_col() + 
   scale_y_continuous(name="reads") +
   theme(axis.text.x=element_text(angle=90),axis.title.x=element_blank())
+
+
+ggplot(tibble(x=colnames(counts),y=colSums(counts)) %>% 
+         bind_cols(samples[match(names(lb.filterlist),samples$NGI.ID),]),
+       aes(x,y,col=Tissue,fill=)) + geom_col() + 
+  scale_y_continuous(name="reads") +
+  theme(axis.text.x=element_text(angle=90),axis.title.x=element_blank())
+
 
 #' Display the per-gene mean expression
 #' 
@@ -122,11 +111,11 @@ ggplot(melt(log10(rowMeans(counts))),aes(x=value)) +
 #' samples colored by condition. The gene coverage 
 #' across samples is extremely similar
 dat <- as.data.frame(log10(counts)) %>% utils::stack() %>% 
-  mutate(Experiment=samples$User.ID[match(ind,samples$NGI.ID)]) %>% 
+  mutate(Tissue=samples$Tissue[match(ind,samples$NGI.ID)]) %>% 
   mutate(Time=samples$Time[match(ind,samples$NGI.ID)])
 
-#' Color by Experiment
-ggplot(dat,aes(x=values,group=ind,col=User.ID)) + 
+#' Color by Experiment ####OBJECT TISSUE NOT FOUND############################################################
+ggplot(dat,aes(x=values,group=ind,col=Tissue)) + 
   geom_density() + ggtitle("sample raw counts distribution") +
   scale_x_continuous(name="per gene raw counts (log10)")
 
@@ -136,8 +125,8 @@ ggplot(dat,aes(x=values,group=ind,col=Time)) +
   scale_x_continuous(name="per gene raw counts (log10)")
 
 #' ## Export
-dir.create(file.path("..","analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
-write.csv(counts,file="../analysis/salmon/ZE-unnormalised-gene-expression_data.csv")
+dir.create(here("analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
+write.csv(counts,file=here("analysis/salmon/ZE-unnormalised-gene-expression_data.csv"))
 ############## change export location name
 
 #' ## Data normalisation 
@@ -145,17 +134,16 @@ write.csv(counts,file="../analysis/salmon/ZE-unnormalised-gene-expression_data.c
 #' For visualization, the data is submitted to a variance stabilization
 #' transformation using DESeq2. The dispersion is estimated independently
 #' of the sample tissue and replicate
-s.sel <- match(colnames(counts),samples$NGI.ID)
 dds <- DESeqDataSetFromMatrix(
   countData = counts,
-  colData = samples[s.sel,],
-  design = ~ User.ID * Time)
-
-save(dds,file="../analysis/salmon/ZE-dds.rda")
+  colData = samples,
+  design = ~ Tissue + Time)
+######################################################################problem here too - did not like *, change to +
+save(dds,file=here("analysis/salmon/ZE-dds.rda"))
 
 #' Check the size factors (i.e. the sequencing library size effect)
 #' 
-#' The sequencing depth is relatively variable (40 to 260 %)
+#' The sequencing depth is relatively variable (0 to 200 %) however the low end of the variance is likely due to poor samples where little sequencing data was actually produce that wasnt 16s bacterial.
 dds <- estimateSizeFactors(dds)
 sizes <- sizeFactors(dds)
 pander(sizes)
@@ -179,8 +167,9 @@ pc <- prcomp(t(vst))
 percent <- round(summary(pc)$importance[2,]*100)
 
 #' ### 3 first dimensions
-#' This looks interesting as the sample separate clearly both by Experiment
-#' and Time in the first 2 components.
+#' Seems that different time points form small clusters and ZE and FMG tissue types appear to separate. These are Comp1 and Comp2 
+#' which explains the different between most of the sampels except for one B4 ZE sample. Appears to be an outlier.
+#' This seems to indicate that the Tissue and Time components explain the difference between samples.
 mar=c(5.1,4.1,4.1,2.1)
 scatterplot3d(pc$x[,1],
               pc$x[,2],
@@ -188,40 +177,58 @@ scatterplot3d(pc$x[,1],
               xlab=paste("Comp. 1 (",percent[1],"%)",sep=""),
               ylab=paste("Comp. 2 (",percent[2],"%)",sep=""),
               zlab=paste("Comp. 3 (",percent[3],"%)",sep=""),
-              color=pal[as.integer(samples$Time)[s.sel]],
-              pch=c(17,19)[as.integer(samples$User.ID)[s.sel]-1])
+              color=pal[as.integer(samples$Time)],
+              pch=c(17,19,15)[as.integer(samples$Tissue)])
 legend("topleft",
        fill=pal[1:nlevels(samples$Time)],
        legend=levels(samples$Time))
 legend("bottomright",
-       pch=c(17,19),
-       legend=levels(samples$User.ID)[-1])
+       pch=c(17,19,15),
+       legend=levels(samples$Tissue))
 par(mar=mar)
 
 #' ### 2D
 pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
-                    samples[s.sel,])
+                    samples)
 
-ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=User.ID)) + 
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
   scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
   scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
 
+#' ### Interactive PCA Plot
+suppressPackageStartupMessages(library(plotly))
+
+interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) +
+  geom_point(size=2) +
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
+
+ggplotly(interplot) %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+                       yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+
+
+
 #' ### Heatmap
 #' Filter for noise
-#' A cutoff at a VST value of 1 leaves about 15000 genes, which is adequate for the QA
-conds <- factor(paste(samples$User.ID,samples$Time))[s.sel]
+#' A cutoff at a VST value of 1 leaves about 32000 genes - is this adequate for the QA?
+conds <- factor(paste(samples$Tissue,samples$Time))
 sels <- rangeFeatureSelect(counts=vst,
                            conditions=conds,
                            nrep=3)
+vstCutoff <- 4+1
 
 #' * Heatmap of "all" genes
 #' Taking into account all the genes (above a noise thresholds), the samples cluster
 #' according to what we also see in the mapping rate plot, _i.e._ there is a correlation with
 #' the amount of sequences in the samples.
-heatmap.2(t(scale(t(vst[sels[[2]],]))),
+#' It appears that generally there is little difference between the samples across all genes
+#'  - a small difference is noticable between ZE tissues and FMG-S tissues, however 
+#' generally the expression levels are relatively balanced apart from the one sample 
+#' in FMG B4. Somatic samples had a small section of more highly expressed genes 
+#' compared to ZE and FMG.
+heatmap.2(t(scale(t(vst[sels[[vstCutoff]],]))),
           distfun=pearson.dist,
           hclustfun=function(X){hclust(X,method="ward.D2")},
           labRow = NA,trace = "none",
@@ -229,19 +236,24 @@ heatmap.2(t(scale(t(vst[sels[[2]],]))),
           col=hpal)
 
 #' *  Heatmap of the 1000 most variable genes
-ord <- order(rowSds(vst[sels[[2]],]),decreasing=TRUE) [1:1000]
+ord <- order(rowSds(vst[sels[[vstCutoff]],]),decreasing=TRUE) [1:1000]
 
-#' The subset is enriched for higher expression values
-ggplot(list(sub=rowMeans(vst[sels[[2]],][ord,]),
-            total=rowMeans(vst[sels[[2]],])) %>%  melt(),
+#' Cluster of subset compared to overall appears to be similar in shape with a shift in
+#' increased VST expression and slightly more spread out density. These most variable genes
+#' appear to have higher levels of VST expression.
+ggplot(list(sub=rowMeans(vst[sels[[vstCutoff]],][ord,]),
+            total=rowMeans(vst[sels[[vstCutoff]],])) %>%  melt(),
        aes(x=value,col=L1)) + 
   geom_density() +
   ggtitle("Density of the subset vs. overall") + 
   scale_x_continuous(name=element_text("VST expression")) + 
   theme(legend.title=element_blank())
 
-#' The clustering remains the same even for the most variable genes
-heatmap.2(t(scale(t(vst[sels[[2]],][ord,]))),
+#' Variance in expression in different tissues can be seen. Certain tissues samples
+#' appear the same as in other tissues. It appears that tissues have different
+#' expression patterns. It can also be seen that over different time points, that 
+#' gene expression between the samples change slightly over time.
+heatmap.2(t(scale(t(vst[sels[[vstCutoff]],][ord,]))),
           distfun=pearson.dist,
           hclustfun=function(X){hclust(X,method="ward.D2")},
           labRow = NA,trace = "none",
@@ -250,21 +262,23 @@ heatmap.2(t(scale(t(vst[sels[[2]],][ord,]))),
 
 
 #' *  Heatmap of the 1000 least variable genes
-ord <- order(rowSds(vst[sels[[2]],])) [1:1000]
+ord <- order(rowSds(vst[sels[[vstCutoff]],])) [1:1000]
 
-#' The subset is enriched for higher expression values, with a strinkingly normal
-#' distribution
-ggplot(list(sub=rowMeans(vst[sels[[2]],][ord,]),
-            total=rowMeans(vst[sels[[2]],])) %>%  melt(),
+#' The subset is enriched for two subsets of genes - ones which have relatively the same
+#' level of VST expression as the total gene subset but also a much higher population
+#' of more highly VST expressed genes.
+ggplot(list(sub=rowMeans(vst[sels[[vstCutoff]],][ord,]),
+            total=rowMeans(vst[sels[[vstCutoff]],])) %>%  melt(),
        aes(x=value,col=L1)) + 
   geom_density() +
   ggtitle("Density of the subset vs. overall") + 
   scale_x_continuous(name=element_text("VST expression")) + 
   theme(legend.title=element_blank())
 
-#' The clustering for the least variable genes shows a separation
-#' by experiment and time point
-heatmap.2(t(scale(t(vst[sels[[2]],][ord,]))),
+#' The clustering for the least variable genes shows a very small change in separation
+#' of gene expression by Tissue and Time. There is a more stark difference in the
+#' Somatic samples.
+heatmap.2(t(scale(t(vst[sels[[vstCutoff]],][ord,]))),
           distfun=pearson.dist,
           hclustfun=function(X){hclust(X,method="ward.D2")},
           labRow = NA,trace = "none",
@@ -272,10 +286,16 @@ heatmap.2(t(scale(t(vst[sels[[2]],][ord,]))),
           col=hpal)
 
 #' ## Conclusion ###################### make separate notes for this.
-#' The quality of the data is good. The PCA shows that the samples cluster by experiment and time, 
-#' however, the heatmap shows a clustering that correlates with the mapping rates, _i.e._ the mixed 
-#' amount of reads originating from either organism. The final heatmap seem to indicate that this 
-#' effect is neglectable albeit confounded.
+#' The data appears to show a correlation between Tissue and Time, with some clustering in the PCA plot
+#' showing a movement of time in ascending order from right to left (+ to -) along the X axis. There can also
+#' be seen that along the Y axis, there are subgroups which correlate to the Tissue type.
+#' Along with this, it appears that overall gene expression does not appear starkly different but
+#' slight differences can be observed between Tissue types. It appears that the most difference between
+#' Tissues can be seen in the 1000 most variable genes, with some small changes between Time points within
+#' those Tissue groups.
+#' The final heat map of the 1000 least variable genes appear to show a very mixed expression pattern, similar
+#' in appearance to the total gene heat map, between Tissue groups and Time points, except for in 
+#' the Somatic tissue type.
 #' 
 #' ```{r empty,eval=FALSE,echo=FALSE}
 #' ```
