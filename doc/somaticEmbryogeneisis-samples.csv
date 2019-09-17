@@ -1,0 +1,59 @@
+ScilifeID,SubmittedID,Stages,Description
+1_130822_AH0TA5ADXX_P464_201B_dual40,#PabK11-35TR0001,0,35TR011-Non-Embryogenic
+1_130719_AH0TBTADXX_P464_202_dual41,#PabK11-35TR0002,1,35TR002-Proliferation
+1_130719_AH0TBTADXX_P464_203_dual42,#PabK11-35TR0003,2,DKM-Start-Maturation-R
+1_130719_AH0TBTADXX_P464_204_dual43,#PabK11-35TR0004,3,35TR009-35-Mid-stage-maturing
+1_130719_AH0TBTADXX_P464_205_dual44,#PabK11-35TR0005,4,35TR003-Start-maturation
+1_130719_AH0TBTADXX_P464_206_dual45,#PabK11-35TR0006,5,35TR005-Start-dessication
+2_130822_BH0TU8ADXX_P464_207B_dual50,#PabK11-35TR0007,6,35TR006-Dessication
+1_130719_AH0TBTADXX_P464_208_dual51,#PabK11-35TR0008,7,35TR004-Roots
+2_130822_AH0TA5ADXX_P464_209B_dual52,#PabK11-35TR0009,8,35TR010-Planting-stage
+1_130719_AH0TBTADXX_P464_211_dual49,#PabK11-35TR0011,9,ZE-R
+P7614_301_S1_L001,#PabK14-03PEM_TR1,1,PEM s (Proliferation)
+P7614_301_S1_L002,#PabK14-03PEM_SR1,1,PEM s (Proliferation)
+P7614_302_S2_L001,#PabK14-03PEM_TR2,1,PEM s (Proliferation)
+P7614_302_S2_L002,#PabK14-03PEM_SR2,1,PEM s (Proliferation)
+P7614_303_S3_L001,#PabK14-03PEM_TR3,1,PEM s (Proliferation)
+P7614_303_S3_L002,PabK14-03PEM_SR3,1,PEM s (Proliferation)
+P7614_304_S4_L001,#PabK14-03DKM_TR1,2,DKM-Early stage maturing embryos (after prematuration)
+P7614_304_S4_L002,#PabK14-03DKM_SR1,2,DKM-Early stage maturing embryos (after prematuration)
+P7614_305_S5_L001,#PabK14-03DKM_TR2,2,DKM-Early stage maturing embryos (after prematuration)
+P7614_305_S5_L002,#PabK14-03DKM_SR2,2,DKM-Early stage maturing embryos (after prematuration)
+P7614_306_S6_L001,#PabK14-03DKM_TR3,2,DKM-Early stage maturing embryos (after prematuration)
+P7614_306_S6_L002,#PabK14-03DKM_SR3,2,DKM-Early stage maturing embryos (after prematuration)
+P7614_307_S7_L001,#PabK14-03SM_TR1,3,"SM-Start maturation (Mid stage maturing embryos, after 3w on maturation)"
+P7614_307_S7_L002,#PabK14-03SM_SR1,3,"SM-Start maturation (Mid stage maturing embryos, after 3w on maturation)"
+P7614_308_S8_L001,#PabK14-03SM_TR2,3,"SM-Start maturation (Mid stage maturing embryos, after 3w on maturation)"
+P7614_308_S8_L002,#PabK14-03SM_SR2,3,"SM-Start maturation (Mid stage maturing embryos, after 3w on maturation)"
+P7614_309_S9_L001,#PabK14-03SM_TR3,3,"SM-Start maturation (Mid stage maturing embryos, after 3w on maturation)"
+P7614_309_S9_L002,#PabK14-03SM_SR3,3,"SM-Start maturation (Mid stage maturing embryos, after 3w on maturation)"
+P7614_310_S10_L001,#PabK14-03LSM_TR1,4,LSM-Late stage maturing embryos (before JUDY)
+P7614_310_S10_L002,#PabK14-03LSM_SR1,4,LSM-Late stage maturing embryos (before JUDY)
+P7614_311_S11_L001,#PabK14-03LSM_TR2,4,LSM-Late stage maturing embryos (before JUDY)
+P7614_311_S11_L002,#PabK14-03LSM_SR2,4,LSM-Late stage maturing embryos (before JUDY)
+P7614_312_S12_L001,#PabK14-03LSM_TR3,4,LSM-Late stage maturing embryos (before JUDY)
+P7614_312_S12_L002,#PabK14-03LSM_SR3,4,LSM-Late stage maturing embryos (before JUDY)
+P7614_313_S13_L001,#PabK14-03SD_TR1,5,"SD -Start dessication (after JUDY, at transfer to dessication))"
+P7614_313_S13_L002,#PabK14-03SD_SR1,5,"SD -Start dessication (after JUDY, at transfer to dessication))"
+P7614_314_S14_L001,#PabK14-03SD_TR2,5,"SD -Start dessication (after JUDY, at transfer to dessication))"
+P7614_314_S14_L002,#PabK14-03SD_SR2,5,"SD -Start dessication (after JUDY, at transfer to dessication))"
+P7614_315_S15_L001,#PabK14-03SD_TR3,5,"SD -Start dessication (after JUDY, at transfer to dessication))"
+P7614_315_S15_L002,#PabK14-03SD_SR3,5,"SD -Start dessication (after JUDY, at transfer to dessication))"
+P7614_316_S16_L001,#PabK14-03ED_TR1,6,ED (End of dessication)
+P7614_316_S16_L002,#PabK14-03ED_SR1,6,ED (End of dessication)
+P7614_317_S17_L001,#PabK14-03ED_TR2,6,ED (End of dessication)
+P7614_317_S17_L002,#PabK14-03ED_SR2,6,ED (End of dessication)
+P7614_318_S18_L001,#PabK14-03ED_TR3,6,ED (End of dessication)
+P7614_318_S18_L002,#PabK14-03ED_SR3,6,ED (End of dessication)
+P7614_319_S19_L001,#PabK14-03RO_TR1,7,RO (at root emergence)
+P7614_319_S19_L002,#PabK14-03RO_SR1,7,RO (at root emergence)
+P7614_320_S20_L001,#PabK14-03RO_TR2,7,RO (at root emergence)
+P7614_320_S20_L002,#PabK14-03RO_SR2,7,RO (at root emergence)
+P7614_321_S21_L001,#PabK14-03RO_TR3,7,RO (at root emergence)
+P7614_321_S21_L002,#PabK14-03RO_SR3,7,RO (at root emergence)
+P7614_322_S22_L001,#PabK14-03PLS_TR1,8,PLS (at planting stage)
+P7614_322_S22_L002,#PabK14-03PLS_SR1,8,PLS (at planting stage)
+P7614_323_S23_L001,#PabK14-03PLS_TR2,8,PLS (at planting stage)
+P7614_323_S23_L002,#PabK14-03PLS_SR2,8,PLS (at planting stage)
+P7614_324_S24_L001,#PabK14-03PLS_TR3,8,PLS (at planting stage)
+P7614_324_S24_L002,#PabK14-03PLS_SR3,8,PLS (at planting stage)
