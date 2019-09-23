@@ -8,23 +8,21 @@
 #'    number_sections: true
 #' ---
 #' # Setup
-#' * Working directory
-setwd("/mnt/picea/projects/aspseq/jfelten/T89-Laccaria-bicolor")
-#' ```{r set up, echo=FALSE}
-#' knitr::opts_knit$set(root.dir="/mnt/picea/projects/aspseq/jfelten/T89-Laccaria-bicolor")
-#' ```
 
 #' * Libraries
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(DESeq2))
 suppressPackageStartupMessages(library(gplots))
+suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(hyperSpec))
 suppressPackageStartupMessages(library(RColorBrewer))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(VennDiagram))
 
 #' * Helper files
-suppressMessages(source("~/Git/zygoticEmbryogenesis/src/R/plotMA.R"))
+suppressMessages(source(here("UPSCb-common/src/R/plotMA.R")))
+# TODO use here() everywhere
+
 suppressMessages(source("~/Git/zygoticEmbryogenesis/src/R/volcanoPlot.R"))
 
 #' * Graphics
@@ -39,6 +37,8 @@ mar <- par("mar")
     stopifnot(sum(sel)==1)
 
     return(
+        # TODO - adjust the x, col and group (to your metadata)
+        
         ggplot(bind_cols(as.data.frame(colData(dds)),
                          melt(vst[sel,])),
                aes(x=Time,y=value,col=Experiment,group=Experiment)) +
@@ -96,10 +96,11 @@ mar <- par("mar")
 
 #' # Analysis
 #' * Data
-load("analysis/salmon/Lacbi-all-dds.rda")
+load("analysis/salmon/dds.rda")
 ##############change file directory?
 
 #' ## Normalisation for visualisation
+#' the normalisation is aware to take advantage of the model to determine the dispersion
 vsd <- varianceStabilizingTransformation(dds,blind=FALSE)
 vst <- assay(vsd)
 vst <- vst - min(vst)
