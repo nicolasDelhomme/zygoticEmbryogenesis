@@ -36,7 +36,7 @@ mar <- par("mar")
 
 #' * Metadata
 #' Sample information ########### need sample info?
-samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/testmerge_complete_v5.csv",
+samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v5.csv",
                     col_types = cols(col_character(),
                                      col_character(),
                                      col_factor(),
@@ -275,7 +275,7 @@ ggplot(dat,aes(x=values,group=ind,col=Experiment)) +
 
 #' ## Export
 dir.create(here("analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
-write.csv(counts,file=here("analysis/salmon/Combined-unnormalised-gene-expression_data.csv"))
+write.csv(counts,file=here("analysis/salmon/4Datasets-unnormalised-gene-expression_data.csv"))
 ############## change export location name
 
 
@@ -293,7 +293,7 @@ dds <- DESeqDataSetFromMatrix(
 dds <- dds[,!(dds$NGI.ID == "P11562_148")]
 
 
-save(dds,file=here("analysis/salmon/CombinedZS29-dds.rda"))
+save(dds,file=here("analysis/salmon/4Datasets-dds.rda"))
 
 #' Check the size factors (i.e. the sequencing library size effect)
 #' 

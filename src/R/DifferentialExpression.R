@@ -23,13 +23,14 @@ suppressPackageStartupMessages(library(VennDiagram))
 suppressMessages(source(here("UPSCb-common/src/R/plotMA.R")))
 # TODO use here() everywhere
 
-suppressMessages(source("~/Git/zygoticEmbryogenesis/src/R/volcanoPlot.R"))
+suppressMessages(source(here("UPSCb-common/src/R/volcanoPlot.R")))
 
 #' * Graphics
 pal=brewer.pal(8,"Dark2")
 hpal <- colorRampPalette(c("blue","white","red"))(100)
 mar <- par("mar")
 
+# TODO need to use biological.R with only ZE
 #' * Functions
 #' 1. plot specific gene expression
 "line_plot" <- function(dds,vst,gene_id){
@@ -41,7 +42,7 @@ mar <- par("mar")
         
         ggplot(bind_cols(as.data.frame(colData(dds)),
                          melt(vst[sel,])),
-               aes(x=Time,y=value,col=Experiment,group=Experiment)) +
+               aes(x=Time,y=value,col=Tissue,group=Tissue)) +
             geom_point() + geom_smooth() +
             scale_y_continuous(name="VST expression") + 
             ggtitle(label=paste("Expression for: ",gene_id))
@@ -53,7 +54,7 @@ mar <- par("mar")
 "extract_results" <- function(dds,vst,contrast,
                               padj=0.01,lfc=0.5,
                               plot=TRUE,verbose=TRUE,
-                              export=TRUE,default_dir="analysis/DE",
+                              export=TRUE,default_dir=here("analysis/DE"),
                               default_prefix="DE-",
                               labels=colnames(dds),
                               sample_sel=1:ncol(dds)){
@@ -96,7 +97,7 @@ mar <- par("mar")
 
 #' # Analysis
 #' * Data
-load("analysis/salmon/dds.rda")
+load(here("analysis/salmon/ZE-dds.rda"))
 ##############change file directory?
 
 #' ## Normalisation for visualisation
@@ -109,7 +110,7 @@ vst <- vst - min(vst)
 #' * 245379 
 #' The gene is medium expressed and show different patterns
 #' in ECM and FLM
-line_plot(dds,vst,"245379")
+line_plot(dds,vst,"MA_99998g0010.1")
 
 #' * 676331
 #' The gene is very lowly expressed with some samples having no expression
@@ -145,51 +146,45 @@ resultsNames(dds)
 #' In the following we look at the interaction specific genes; _i.e._ genes that 
 #' changes at a given time transition in between experiments
 #' ### FLM _vs._ ECM at T3
-Lb_3 <- extract_results(dds,vst,"Experiment_FLM_vs_ECM",
-                        default_prefix="Labic_FLM-vs-ECM_T3_",
-                        labels=paste0(colData(dds)$Experiment,
+FMG_S <- extract_results(dds,vst,"Tissue_FMG_vs_S",
+                        default_prefix="Tissue_FMG_vs_S_",
+                        labels=paste0(colData(dds)$Tissue,
                                       colData(dds)$Time),
-                        sample_sel=colData(dds)$Time==3)
+                        sample_sel=colData(dds)$Tissue!="ZE")
 
 #' ### FLM _vs._ ECM at T7
 #' Here we want to conmbine the effect of FLM-ECM at time T3 and the specific
 #' FLM:T7 interaction 
-Lb_7 <- extract_results(dds,vst,c(0,1,0,0,0,0,1,0,0,0),
-                       default_prefix="Labic_FLM-vs-ECM_T7_",
-                       labels=paste0(colData(dds)$Experiment,
+ZE_S <- extract_results(dds,vst,"Tissue_ZE_vs_S", # c(Tissue,"ZE","S")
+                       default_prefix="Tissue_ZE_vs_S_", 
+                       labels=paste0(colData(dds)$Tissue,
                                      colData(dds)$Time),
-                       sample_sel=colData(dds)$Time==7)
+                       sample_sel=colData(dds)$Tissue!="FMG")
 
-#' ### FLM _vs._ ECM at T14
-Lb_14 <- extract_results(dds,vst,c(0,1,0,0,0,0,0,1,0,0),
-                   default_prefix="Labic_FLM-vs-ECM_T14_",
-                        labels=paste0(colData(dds)$Experiment,
-                                      colData(dds)$Time),
-                        sample_sel=colData(dds)$Time==14)
 
-#' ### FLM _vs._ ECM at T21
-Lb_21 <- extract_results(dds,vst,c(0,1,0,0,0,0,0,0,1,0),
-                        default_prefix="Labic_FLM-vs-ECM_T21_",
-                        labels=paste0(colData(dds)$Experiment,
-                                      colData(dds)$Time),
-                        sample_sel=colData(dds)$Time==21)
+FMG_ZE <- extract_results(dds,vst,list("Tissue_ZE_vs_S","Tissue_FMG_vs_S"), #c(0,-1,1,0,0,0,0,0....)
+                          default_prefix="Tissue_ZE_vs_FMG_",
+                          labels=paste0(colData(dds)$Tissue,
+                                        colData(dds)$Time),
+                          sample_sel=colData(dds)$Tissue!="S")
 
-#' ### FLM _vs._ ECM at T28
-Lb_28 <- extract_results(dds,vst,c(0,1,0,0,0,0,0,0,0,1),
-                        default_prefix="Labic_FLM-vs-ECM_T28_",
-                        labels=paste0(colData(dds)$Experiment,
-                                      colData(dds)$Time),
-                        sample_sel=colData(dds)$Time==28)
+FMG_ZE <- extract_results(dds,vst,c("Tissue","ZE","FMG"), #c(0,-1,1,0,0,0,0,0....)
+                          export = FALSE,plot = FALSE,
+                          default_prefix="Tissue_ZE_vs_FMG_",
+                          labels=paste0(colData(dds)$Tissue,
+                                        colData(dds)$Time),
+                          sample_sel=colData(dds)$Tissue!="S")
+
+
+
 
 #' ### Venn Diagram
 grid.newpage()
-grid.draw(venn.diagram(list(T3=Lb_3,
-               T7=Lb_7,
-               T14=Lb_14,
-               T21=Lb_21,
-               T28=Lb_28),
+grid.draw(venn.diagram(list("FMG vs S"=FMG_S,
+               "ZE vs S"=ZE_S,
+               "ZE vs FMG"=FMG_ZE),
           NULL,
-          fill=pal[1:5]))
+          fill=pal[1:3]))
 
 #' # Session Info 
 #'  ```{r session info, echo=FALSE}

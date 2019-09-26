@@ -36,7 +36,7 @@ mar <- par("mar")
 
 #' * Metadata
 #' Sample information ########### need sample info?
-samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/testmerge_complete_v3.csv",
+samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/ZE_Dataset_v3.csv",
                     col_types = cols(col_character(),
                                      col_character(),
                                      col_factor(),
@@ -62,11 +62,14 @@ lb.filterlist <- str_subset(lb.filelist,"L001_sortmerna_trimmomatic")
 lb.filterlist <- (str_subset(lb.filterlist, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/RNA-Seq/salmon/P11562_112_S11_L001_sortmerna_trimmomatic/quant.sf", negate = TRUE))
 #removed P11562_112 row from sample list
 samples <- filter(samples, !grepl("112",NGI.ID))
+#samples <- filter(samples, !grepl("P11562_201",NGI.ID)) NOT REMOVING THIS SAMPLE ANYMORE, FIXED FROM FMG TO S
+#lb.filterlist <- (str_subset(lb.filterlist, "P11562_201", negate = TRUE)) NOT REMOVING THIS SAMPLE ANYMORE, FIXED FROM FMG TO S
+
 stopifnot(all(str_which(lb.filterlist, samples$NGI.ID) == 1:length(lb.filterlist)))
 ##assign names to the filtered filelist (which removed L002)
 names(lb.filterlist) <- samples$NGI.ID
 lb.filterlist <- lb.filterlist[samples$Tissue %in% c("ZE","FMG","S")] ##Are we only looking at ZE?
-
+samples <- subset(samples, select = -c(User.ID, Sample.ID, Replicate, Mreads, X..Q30) )
 
 #' Read the expression at the gene level (there is one transcript per gene)
 lb.g <- suppressMessages(tximport(files = lb.filterlist, 
@@ -137,9 +140,9 @@ write.csv(counts,file=here("analysis/salmon/ZE-unnormalised-gene-expression_data
 dds <- DESeqDataSetFromMatrix(
   countData = counts,
   colData = samples,
-  design = ~ Tissue + Time)
-######################################################################problem here too - did not like *, change to +
-save(dds,file=here("analysis/salmon/ZE-dds.rda"))
+  design = ~ Time - Tissue)
+##############################does not like *, + or /, will only take - as the model.
+save(dds,file=here("analysis/salmon/ZE-Dataset-dds.rda"))
 
 #' Check the size factors (i.e. the sequencing library size effect)
 #' 
@@ -150,7 +153,7 @@ pander(sizes)
 boxplot(sizes, main="Sequencing libraries size factor")
 
 #' ## Variance Stabilising Transformation
-vsd <- varianceStabilizingTransformation(dds, blind=TRUE)
+vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
 vst <- assay(vsd)
 vst <- vst - min(vst)
 
@@ -201,11 +204,11 @@ ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) +
 #' ### Interactive PCA Plot
 suppressPackageStartupMessages(library(plotly))
 
-interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) +
+interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue,text=NGI.ID)) +
   geom_point(size=2) +
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
 
-ggplotly(interplot) %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
                        yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
 
 

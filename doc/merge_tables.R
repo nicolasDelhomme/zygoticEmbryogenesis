@@ -72,10 +72,37 @@ testjoin <- bind_cols(arrangingNGI, arrangedV2)
 print(testjoin)
 write_csv(testjoin, path = "doc/testmerge_complete_v3.csv")
 
+### refining the ZE_Dataset
+ZE_Dataset_v3 <- testmerge_complete_v3
+
+mod <- filter(ZE_Dataset_v3,NGI.ID == "P11562_201")
+mod$Tissue <- str_replace(mod$Tissue,"FMG","S")
+mod$User.ID <- str_replace(mod$User.ID,"FMG","S")
+mod$Replicate <- str_replace(mod$Replicate,"FMG","S")
+mod
+
+t <- filter(ZE_Dataset_v3,NGI.ID != "P11562_201")
+t2 <- cbind(t[52:56,])
+t1 <- cbind(t[1:51,])
+t <- bind_rows(t1,mod,t2)
+t
+
+ZE_Dataset_v3 <- t
+write_csv(ZE_Dataset_v3, path = "doc/ZE_Dataset_v3.csv")
+
+##need to rename the B3 FMG 201 sample to B3 S 201.
+
+
+
+##########ZE DATASET ABOVE ONLY
+
+
+
+
 
 #####adding Somatic and 29Seed information
 
-
+testmerge_complete_v3 <- ZE_Dataset_v3
 filelistSomatic <- list.files("/mnt/picea/projects/spruce/uegertsdotter/SE-germinants/salmon", 
                                  recursive = TRUE, 
                                  pattern = "quant.sf",
@@ -191,60 +218,6 @@ unification4["Experiment"] <- experiment
 unification4
 
 write_csv(unification4, path = "doc/testmerge_complete_v5.csv")
+write_csv(unification4, path = "doc/4Datasets_v5.csv")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##old code
-NGI.ID <- str_replace(filelistSomatic,".*XX_","")
-NGI.ID <- str_replace(NGI.ID,"_sort.*","")
-NGI.ID <- unique(NGI.ID)
-print(NGI.ID)
-
-Tissue <- (rep(c("S"),times=19))
-Time <- (rep(c("U"),times=19))
-User.ID <- (rep(c("NA"),times=19))
-Sample.ID <- (rep(c("NA"),times=19))
-Replicate <- (rep(c("NA"),times=19))
-
-somaticAdd <- data.frame(NGI.ID, User.ID, Time, Sample.ID, Tissue, Replicate)
-
-NGI.ID <- str_replace(filelist29Seed,".*XX_","")
-NGI.ID <- str_replace(NGI.ID,"_sort.*","")
-NGI.ID <- unique(NGI.ID)
-print(NGI.ID)
-
-Tissue <- (rep(c("29Seed"),times=12))
-Time <- (rep(c("U"),times=12))
-User.ID <- (rep(c("NA"),times=12))
-Sample.ID <- (rep(c("NA"),times=12))
-Replicate <- (rep(c("NA"),times=12))
-
-seedAdd <- data.frame(NGI.ID, User.ID, Time, Sample.ID, Tissue, Replicate)
-
-
-somaticAdd
-seedAdd
-
-
-
-unification2 <- bind_rows(testmerge_complete_v3,somaticAdd)
-unification2
-
-unification3 <- bind_rows(unification2,seedAdd)
-unification3
-
-write_csv(unification3, path = "doc/testmerge_complete_v4.csv")
 
