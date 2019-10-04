@@ -97,7 +97,7 @@ mar <- par("mar")
 
 #' # Analysis
 #' * Data
-load(here("analysis/salmon/ZE-dds.rda"))
+load(here("analysis/salmon/ZE-ZF-Dataset-dds.rda"))
 ##############change file directory?
 
 #' ## Normalisation for visualisation

@@ -324,22 +324,22 @@ percent <- round(summary(pc)$importance[2,]*100)
 #' Seems that different time points form small clusters and ZE and FMG tissue types appear to separate. These are Comp1 and Comp2 
 #' which explains the different between most of the sampels except for one B4 ZE sample. Appears to be an outlier.
 #' This seems to indicate that the Tissue and Time components explain the difference between samples.
-mar=c(5.1,4.1,4.1,2.1)
-scatterplot3d(pc$x[,1],
-              pc$x[,2],
-              pc$x[,3],
-              xlab=paste("Comp. 1 (",percent[1],"%)",sep=""),
-              ylab=paste("Comp. 2 (",percent[2],"%)",sep=""),
-              zlab=paste("Comp. 3 (",percent[3],"%)",sep=""),
-              color=pal[as.integer(samples$Tissue)],
-              pch=c(17,19,15,13)[as.integer(samples$Experiment)])
-legend("topleft",
-       fill=pal[1:nlevels(samples$Tissue)],
-       legend=levels(samples$Tissue))
-legend("bottomright",
-       pch=c(17,19,15,13),
-       legend=levels(samples$Experiment))
-par(mar=mar)
+#mar=c(5.1,4.1,4.1,2.1)
+#scatterplot3d(pc$x[,1],
+#              pc$x[,2],
+#              pc$x[,3],
+#              xlab=paste("Comp. 1 (",percent[1],"%)",sep=""),
+#              ylab=paste("Comp. 2 (",percent[2],"%)",sep=""),
+#              zlab=paste("Comp. 3 (",percent[3],"%)",sep=""),
+#              color=pal[as.integer(samples$Tissue)],
+#              pch=c(17,19,15,13)[as.integer(samples$Experiment)])
+#legend("topleft",
+#       fill=pal[1:nlevels(samples$Tissue)],
+#       legend=levels(samples$Tissue))
+#legend("bottomright",
+#       pch=c(17,19,15,13),
+#       legend=levels(samples$Experiment))
+#par(mar=mar)
 samples$NGI.ID
 samples <- samples[!(samples$NGI.ID == "P11562_148"),]
 
