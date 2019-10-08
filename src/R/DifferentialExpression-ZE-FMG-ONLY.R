@@ -100,7 +100,7 @@ mar <- par("mar")
 #' # Analysis
 #' * Data
 load(here("analysis/salmon/ZE-ZF-Dataset-dds.rda"))
-##############change file directory?
+
 
 #' ## Normalisation for visualisation
 #' the normalisation is aware to take advantage of the model to determine the dispersion
@@ -113,19 +113,6 @@ vst <- vst - min(vst)
 #' The gene is medium expressed and show different patterns
 #' in ECM and FLM
 line_plot(dds,vst,"MA_99998g0010.1")
-
-#' * 676331
-#' The gene is very lowly expressed with some samples having no expression
-line_plot(dds,vst,"676331")
-
-#' * 315313
-#' Same as 676331
-line_plot(dds,vst,"Lacbi1.eu2.Lbscf0069g00950")
-
-#' * 315258
-#' The gene has a low expression and there is overrlap between the two
-#' experiments, but there is visible expression difference
-line_plot(dds,vst,"315258")
 
 #' ## Differential Expression
 dds <- DESeq(dds)
@@ -150,13 +137,6 @@ resultsNames(dds)
 #' ### FLM _vs._ ECM at T3
 
 
-B1vsB1FMG <- extract_results(dds,vst,c(1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-                             export = FALSE,plot = FALSE,
-                             default_prefix="Tissue_B1-FMG_B1-FMG__",
-                             labels=paste0(colData(dds)$Tissue,
-                                           colData(dds)$Time),
-                             sample_sel=colData(dds)$Tissue!="ZE")
-
 B2vsB1FMG <- extract_results(dds,vst,c(0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
                              export = FALSE,plot = FALSE,
                          default_prefix="Tissue_B2-FMG_B1-FMG__",
@@ -171,6 +151,7 @@ ndeg <- lapply(2:3,function(i){
     vec <- rep(0,length(resultsNames(dds)))
     vec[i]<-1
     if(i>2){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
         vec[i-1] <- -1 
     }
     return(list(length(extract_results(dds,vst,vec,verbose = FALSE,
@@ -179,14 +160,18 @@ ndeg <- lapply(2:3,function(i){
 
 
 barplot(unlist(ndeg),beside = TRUE,las=2)
-names(ndeg) <- resultsNames(dds)[2:12]
+names(ndeg) <- resultsNames(dds)[2:10]
 
 
+
+
+####Time vs B1 FMG Tissue
 ###differential expression based on Time only
-ndeg3 <- sapply(2:12,function(i){
+ndeg3 <- sapply(2:10,function(i){
     vec <- rep(0,length(resultsNames(dds)))
     vec[i]<-1
     if(i>2){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
         vec[i-1] <- -1        
     }
     sapply(extract_results(dds,vst,vec,verbose = FALSE,
@@ -194,13 +179,13 @@ ndeg3 <- sapply(2:12,function(i){
 })
 
 #differential expression based only on Time (reference is Time_B1)
-colnames(ndeg3) <- resultsNames(dds)[2:12]
+colnames(ndeg3) <- resultsNames(dds)[2:10]
 rownames(ndeg3) <- c("all","up","dn")
 barplot(ndeg3,beside = TRUE, las=2, horiz=F)
 
 #same as above, but showing in groups of "all" "up" and "down" regulated.
 ndeg3trans <- t(ndeg3)
-rownames(ndeg3trans) <- resultsNames(dds)[2:12]
+rownames(ndeg3trans) <- resultsNames(dds)[2:10]
 colnames(ndeg3trans) <- c("all","up","dn")
 barplot(ndeg3trans,beside = TRUE, las=2, horiz=F)
 
@@ -223,11 +208,12 @@ grid.draw(venn.diagram(c("B6 vs B1"=B6vsB1[1],
 
 
 
-
-ndeg4 <- sapply(14:23,function(i){
+####Time vs ZETissue (not adjusted for FMG vs ZE)
+ndeg4 <- sapply(12:20,function(i){
     vec <- rep(0,length(resultsNames(dds)))
     vec[i]<-1
-    if(i>14){
+    if(i>12){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
         vec[i-1] <- -1        
     }
     sapply(extract_results(dds,vst,vec,verbose = FALSE,
@@ -235,18 +221,140 @@ ndeg4 <- sapply(14:23,function(i){
 })
 
 #differential expression based only on Time (reference is Time_B1)
-colnames(ndeg4) <- resultsNames(dds)[14:23]
+colnames(ndeg4) <- resultsNames(dds)[12:20]
 rownames(ndeg4) <- c("all","up","dn")
 barplot(ndeg4,beside = TRUE, las=2, horiz=F)
 
 #same as above, but showing in groups of "all" "up" and "down" regulated.
 ndeg4trans <- t(ndeg4)
-rownames(ndeg4trans) <- resultsNames(dds)[14:23]
+rownames(ndeg4trans) <- resultsNames(dds)[12:20]
 colnames(ndeg4trans) <- c("all","up","dn")
 barplot(ndeg4trans,beside = TRUE, las=2, horiz=F)
 ###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
 
 
+
+
+
+
+####Time vs ZETIssue (maybe adjusted for FMG vs ZE?)
+##0.5 for every ZE_Time sample, 1 for ZEvsFMG Tissue
+ndeg5 <- sapply(12:20,function(i){
+    vec <- rep(0,length(resultsNames(dds)))
+    vec[i]<-0.5
+    vec[13]<-1
+    if(i>12){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
+        vec[i-1] <- -1        
+    }
+    sapply(extract_results(dds,vst,vec,verbose = FALSE,
+                           export = FALSE,plot = FALSE),length)
+})
+
+#differential expression based only on Time (reference is Time_B1)
+colnames(ndeg5) <- resultsNames(dds)[12:20]
+rownames(ndeg5) <- c("all","up","dn")
+barplot(ndeg5,beside = TRUE, las=2, horiz=F)
+
+#same as above, but showing in groups of "all" "up" and "down" regulated.
+ndeg5trans <- t(ndeg5)
+rownames(ndeg5trans) <- resultsNames(dds)[12:20]
+colnames(ndeg5trans) <- c("all","up","dn")
+barplot(ndeg5trans,beside = TRUE, las=2, horiz=F)
+    ###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
+
+
+
+##0.5 for ZEvsFMG Tissue
+ndeg6 <- sapply(12:20,function(i){
+    vec <- rep(0,length(resultsNames(dds)))
+    vec[i]<-1
+    vec[11]<-0.5
+    if(i>12){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
+        vec[i-1] <- -1        
+    }
+    sapply(extract_results(dds,vst,vec,verbose = FALSE,
+                           export = FALSE,plot = FALSE),length)
+})
+
+#differential expression based only on Time (reference is Time_B1)
+colnames(ndeg6) <- resultsNames(dds)[12:20]
+rownames(ndeg6) <- c("all","up","dn")
+barplot(ndeg6,beside = TRUE, las=2, horiz=F)
+
+#same as above, but showing in groups of "all" "up" and "down" regulated.
+ndeg6trans <- t(ndeg6)
+rownames(ndeg6trans) <- resultsNames(dds)[12:20]
+colnames(ndeg6trans) <- c("all","up","dn")
+barplot(ndeg6trans,beside = TRUE, las=2, horiz=F)
+###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
+
+
+
+ndeg6noneg <- sapply(12:20,function(i){
+    vec <- rep(0,length(resultsNames(dds)))
+    vec[i]<-1
+    vec[11]<-0.5
+    sapply(extract_results(dds,vst,vec,verbose = FALSE,
+                           export = FALSE,plot = FALSE),length)
+})
+
+#differential expression based only on Time (reference is Time_B1)
+colnames(ndeg6noneg) <- resultsNames(dds)[12:20]
+rownames(ndeg6noneg) <- c("all","up","dn")
+barplot(ndeg6noneg,beside = TRUE, las=2, horiz=F)
+
+#same as above, but showing in groups of "all" "up" and "down" regulated.
+ndeg6nonegtrans <- t(ndeg6noneg)
+rownames(ndeg6nonegtrans) <- resultsNames(dds)[12:20]
+colnames(ndeg6nonegtrans) <- c("all","up","dn")
+barplot(ndeg6nonegtrans,beside = TRUE, las=2, horiz=F)
+###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
+
+
+
+
+ZEB2B3 <- extract_results(dds,vst,c(0,0,0,0,0,
+                                    0,0,0,0,0,
+                                    1,0.5,0.5,0,0,
+                                    0,0,0,0,0),
+                          verbose = TRUE, export = FALSE,plot = FALSE,
+                          default_prefix="Tissue_ZE_vs_S_", 
+                          labels=paste0(colData(dds)$Tissue,
+                                        colData(dds)$Time),
+                          sample_sel=colData(dds)$Tissue!="FMG")
+
+ZEB4B5B6 <- extract_results(dds,vst,c(0,0,0,0,0,
+                                      0,0,0,0,0,
+                                      1,0,0,0.5,0.5,
+                                      0.5,0,0,0,0),
+                            verbose = TRUE, export = FALSE,plot = FALSE,
+                            default_prefix="Tissue_ZE_vs_S_", 
+                            labels=paste0(colData(dds)$Tissue,
+                                          colData(dds)$Time),
+                            sample_sel=colData(dds)$Tissue!="FMG")
+
+ZEB7B8B910 <- extract_results(dds,vst,c(0,0,0,0,0,
+                                       0,0,0,0,0,
+                                       1,0,0,0,0,
+                                       0,0.5,0.5,0.5,0.5),
+                              verbose = TRUE, export = FALSE,plot = FALSE,
+                             default_prefix="Tissue_ZE_vs_S_", 
+                             labels=paste0(colData(dds)$Tissue,
+                                           colData(dds)$Time),
+                             sample_sel=colData(dds)$Tissue!="FMG")
+
+
+
+
+#' ### Venn Diagram
+grid.newpage()
+grid.draw(venn.diagram(list("B2-B3"=ZEB2B3$all,
+                            "B4-B6"=ZEB4B5B6$all,
+                            "B7-B10"=ZEB7B8B910$all),
+                       NULL,
+                       fill=pal[1:3]))
 
 
 
@@ -273,31 +381,25 @@ ZE_S <- extract_results(dds,vst,"Tissue_ZE_vs_S", # c(Tissue,"ZE","S")
                        sample_sel=colData(dds)$Tissue!="FMG")
 
 
-FMG_ZE <- extract_results(dds,vst,list("Tissue_ZE_vs_S","Tissue_FMG_vs_S"), #c(0,-1,1,0,0,0,0,0....)
-                          default_prefix="Tissue_ZE_vs_FMG_",
-                          labels=paste0(colData(dds)$Tissue,
-                                        colData(dds)$Time),
-                          sample_sel=colData(dds)$Tissue!="S")
+resultsNames(dds)
 
-FMG_ZE <- extract_results(dds,vst,c("Tissue","ZE","FMG"), #c(0,-1,1,0,0,0,0,0....)
-                          export = FALSE,plot = FALSE,
-                          default_prefix="Tissue_ZE_vs_FMG_",
-                          labels=paste0(colData(dds)$Tissue,
-                                        colData(dds)$Time),
-                          sample_sel=colData(dds)$Tissue!="S")
+
 
 
 
 
 #' ### Venn Diagram
 grid.newpage()
-grid.draw(venn.diagram(list("B2 vs B1"=B2vsB1FMG,
-                            "B3 vs B1"=B3vsB1FMG,
-                            "B4 vs B1"=B4vsB1FMG,
-                            "B5 vs B1"=B5vsB1FMG,
-                            "B6 vs B1"=B6vsB1FMG),
+grid.draw(venn.diagram(list("1"=ZEB1B2$all,
+                            "2"=ZEB4B5$all),
           NULL,
-          fill=pal[1:5]))
+          fill=pal[1:2]))
+
+grid.newpage()
+grid.draw(venn.diagram(list("1"=ZEB4$all,
+                            "2"=ZEB5$all),
+                       NULL,
+                       fill=pal[1:2]))
 
 
 ####Intercept (B1 VS B1?), B2 vs B1 and B3 VS B1

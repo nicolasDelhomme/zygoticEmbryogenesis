@@ -36,7 +36,7 @@ mar <- par("mar")
 
 #' * Metadata
 #' Sample information ########### need sample info?
-samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v5.csv",
+samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v6.csv",
                     col_types = cols(col_character(),
                                      col_character(),
                                      col_factor(),
@@ -190,6 +190,7 @@ countsSomaticEmb <- cbind(part3, countsSomaticEmb)
 samples <- filter(samples, !grepl("P11562_112",NGI.ID))
 
 lb.filterlist <- c(lb.filterlistZE,lb.filterlist29Seed,lb.filterlistSomaticEmbGerm1,lb.filterlistSomaticEmb)
+lb.filterlist <- c(lb.filterlistZE,lb.filterlist29Seed,lb.filterlistSomaticEmbGerm1,lb.filterlistSomaticEmb)
 #####Filelists have been combined, however not able to proceed - NGI IDs do not match.
 #####All samples should have the same Tissue Type in the Somatic and 29Seed - Time is not changed either - they should all be the same.
 
@@ -199,7 +200,7 @@ stopifnot(all(str_which(lb.filterlist, samples$NGI.ID) == 1:length(lb.filterlist
 ##assign names to the filtered filelist (which removed L002)
 names(lb.filterlist) <- samples$NGI.ID
 #lb.filterlist <- lb.filterlist[samples$Tissue %in% c("ZE","FMG","S","Normal","Aberrant","Non-EMB","PEM","DKM","SM","LSM","SD","ED","RO","PLS","ZE-R")] ##Are we only looking at ZE?
-lb.filterlist <- lb.filterlist[samples$Experiment %in% c("Zygotic","29Seed","Somatic Embryogenesis Germinants","Somatic Embryogenesis")]
+#lb.filterlist <- lb.filterlist[samples$Experiment %in% c("Zygotic","29Seed","Somatic Embryogenesis Germinants","Somatic Embryogenesis")]
 
 #' Read the expression at the gene level (there is one transcript per gene)
 #lb.g <- suppressMessages(tximport(files = lb.filterlist, 

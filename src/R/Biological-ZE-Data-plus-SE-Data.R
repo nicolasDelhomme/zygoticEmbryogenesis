@@ -36,7 +36,7 @@ mar <- par("mar")
 
 #' * Metadata
 #' Sample information ########### need sample info?
-samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/ZE_Dataset_v4.csv",
+samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v6.csv",
                     col_types = cols(col_character(),
                                      col_character(),
                                      col_factor(),
@@ -44,9 +44,17 @@ samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/ZE_Dataset_v4.csv",
                                      col_factor(),
                                      col_character(),
                                      col_double(),
-                                     col_double())) %>% 
+                                     col_double(),
+                                     col_factor())) %>% 
   mutate(Tissue=factor(Tissue)) %>% 
-  mutate(Time=factor(Time))
+  mutate(Time=factor(Time)) %>%
+  mutate(Experiment=factor(Experiment))
+samples <- subset(samples,samples$Experiment == "Zygotic Embryogenesis")
+
+
+
+
+
 
 #' # Analysis
 #' ## Raw data
@@ -73,30 +81,30 @@ samples <- filter(samples, !grepl("112",NGI.ID))
 trim_samples <- subset(samples, samples$Tissue == "S")
 samples <- subset(samples, samples$Tissue != "S")
 samples
-#trim_samples
+trim_samples
 
 ##match NGI.IDs to filelist
 ##remove files
 lb.filterlist_trim <- lb.filterlist
 lb.filterlist_trim <- str_subset(lb.filterlist_trim, c(trim_samples$NGI.ID))
 lb.filterlist_trim <- append(lb.filterlist_trim, c(str_subset(lb.filterlist, "P11562_201")))
-#
-#
+
+
 lb.filterlist <- str_subset(lb.filterlist, c(trim_samples$NGI.ID), negate = TRUE)
 lb.filterlist <- str_subset(lb.filterlist, "P11562_201", negate = TRUE)
-#
-#
-#double_A <- trim_samples
-#double_B <- trim_samples
-#double_A$NGI.ID <- str_replace(double_A$NGI.ID,"P11562_","P11562_A_")
-#double_B$NGI.ID <- str_replace(double_B$NGI.ID,"P11562_","P11562_B_")
-#double_A$Tissue <- str_replace(double_A$Tissue,"S","FMG")
-#double_B$Tissue <- str_replace(double_B$Tissue,"S","ZE")
-#double_A$Replicate <- str_replace(double_A$Replicate,"S","FMG")
-#double_B$Replicate <- str_replace(double_B$Replicate,"S","ZE")
-#
-#lb.filterlist_trim_A <- lb.filterlist_trim
-#lb.filterlist_trim_B <- lb.filterlist_trim
+
+
+double_A <- trim_samples
+double_B <- trim_samples
+double_A$NGI.ID <- str_replace(double_A$NGI.ID,"P11562_","P11562_A_")
+double_B$NGI.ID <- str_replace(double_B$NGI.ID,"P11562_","P11562_B_")
+double_A$Tissue <- str_replace(double_A$Tissue,"S","FMG")
+double_B$Tissue <- str_replace(double_B$Tissue,"S","ZE")
+double_A$Replicate <- str_replace(double_A$Replicate,"S","FMG")
+double_B$Replicate <- str_replace(double_B$Replicate,"S","ZE")
+
+lb.filterlist_trim_A <- lb.filterlist_trim
+lb.filterlist_trim_B <- lb.filterlist_trim
 
 
 
@@ -107,25 +115,89 @@ lb.filterlist <- str_subset(lb.filterlist, "P11562_201", negate = TRUE)
 stopifnot(all(str_which(lb.filterlist, samples$NGI.ID) == 1:length(lb.filterlist)))
 ##assign names to the filtered filelist (which removed L002)
 names(lb.filterlist) <- samples$NGI.ID
-#names(lb.filterlist_trim_A) <- double_A$NGI.ID
-#names(lb.filterlist_trim_B) <- double_B$NGI.ID
+names(lb.filterlist_trim_A) <- double_A$NGI.ID
+names(lb.filterlist_trim_B) <- double_B$NGI.ID
 
 lb.filterlist <- lb.filterlist[samples$Tissue %in% c("ZE","FMG")] ##Are we only looking at ZE?
-#lb.filterlist_trim_A <- lb.filterlist_trim_A[double_A$Tissue %in% c("FMG")] ##Are we only looking at ZE?
-#lb.filterlist_trim_B <- lb.filterlist_trim_B[double_B$Tissue %in% c("ZE")] ##Are we only looking at ZE?
+lb.filterlist_trim_A <- lb.filterlist_trim_A[double_A$Tissue %in% c("FMG")] ##Are we only looking at ZE?
+lb.filterlist_trim_B <- lb.filterlist_trim_B[double_B$Tissue %in% c("ZE")] ##Are we only looking at ZE?
 
 
-#samples <- bind_rows(samples,double_A,double_B)
+samples <- bind_rows(samples,double_A,double_B)
 samples <- subset(samples, select = -c(User.ID, Sample.ID, Replicate, Mreads, X..Q30) )
 
-#, lb.filterlist_trim_A, lb.filterlist_trim_B
-
+lb.filterlist <- c(lb.filterlist,lb.filterlist_trim_A, lb.filterlist_trim_B)
 
 #' Read the expression at the gene level (there is one transcript per gene)
 lb.g <- suppressMessages(tximport(files = c(lb.filterlist), 
                                   type = "salmon",txOut=TRUE))
 
 counts <- round(lb.g$counts)
+
+##Start SE
+samplesSE <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v6.csv",
+                      col_types = cols(col_character(),
+                                       col_character(),
+                                       col_factor(),
+                                       col_character(),
+                                       col_factor(),
+                                       col_character(),
+                                       col_double(),
+                                       col_double(),
+                                       col_factor())) %>% 
+  mutate(Tissue=factor(Tissue)) %>% 
+  mutate(Time=factor(Time)) %>%
+  mutate(Experiment=factor(Experiment))
+
+samplesSE <- subset(samplesSE,samplesSE$Experiment == "Somatic Embryogenesis")
+samplesSE$Time <- samplesSE$Tissue
+samplesSE$Time <- str_c("B",samplesSE$Time)
+samplesSE$Tissue <- c("SE")
+
+lb.filelistSomaticEmb <- list.files("/mnt/picea/projects/spruce/uegertsdotter/22_Somatic_Embryogenesis_Project/salmon", 
+                                    recursive = TRUE, 
+                                    pattern = "quant.sf",
+                                    full.names = TRUE)
+lb.filterlistSomaticEmb <- str_subset(lb.filelistSomaticEmb,"L002", negate = TRUE)
+
+
+#################need to merge countsZE and part3, between column 53 and 54 (to become the new column 54)
+lb.filterlistSomaticEmb1 <- str_subset(lb.filelistSomaticEmb,"L002_sortmerna_trimmomatic")
+names(lb.filterlistSomaticEmb1) <- sapply(lapply(strsplit(lb.filterlistSomaticEmb1,"_"),"[",4:5),paste,collapse="_")
+lb.filterlistSomaticEmb2 <- str_subset(lb.filelistSomaticEmb,"L002_sortmerna_trimmomatic")
+names(lb.filterlistSomaticEmb2) <- sapply(lapply(strsplit(lb.filterlistSomaticEmb2,"_"),"[",4:5),paste,collapse="_")
+
+lb.filterlistSomaticEmb3 <- str_subset(lb.filelistSomaticEmb,"L00", negate = TRUE)
+names(lb.filterlistSomaticEmb3) <- sapply(lapply(strsplit(lb.filterlistSomaticEmb3,"_"),"[",7:8),paste,collapse="_")
+
+names(lb.filterlistSomaticEmb1) <- str_replace(names(lb.filterlistSomaticEmb1),".*salmon/","")
+names(lb.filterlistSomaticEmb2) <- str_replace(names(lb.filterlistSomaticEmb2),".*salmon/","")
+
+part1 <- suppressMessages(round(tximport(files = lb.filterlistSomaticEmb1, 
+                                         type = "salmon",txOut=TRUE)$counts))
+
+part2 <- suppressMessages(round(tximport(files = lb.filterlistSomaticEmb2, 
+                                         type = "salmon",txOut=TRUE)$counts))
+
+part3 <- suppressMessages(round(tximport(files = lb.filterlistSomaticEmb3, 
+                                         type = "salmon",txOut=TRUE)$counts))
+
+all(colnames(part1)==colnames(part2))
+countsSomaticEmb <- part1 + part2
+countsSomaticEmb <- cbind(part3, countsSomaticEmb)
+################# end SE
+
+
+
+length(samples$NGI.ID)
+length(samplesSE$NGI.ID)
+samples <- bind_rows(samples, samplesSE)
+
+counts <- cbind(counts,countsSomaticEmb)
+
+length(samples$NGI.ID)
+ncol(counts)
+
 
 #' ## Raw Data QC analysis
 #' Check how many genes are never expressed - reasonable level of non-expressed genes indicated.
@@ -144,7 +216,7 @@ dat <- as.data.frame(log10(counts)) %>% utils::stack() %>%
 
 #' ## Export
 dir.create(here("analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
-write.csv(counts,file=here("analysis/salmon/ZE-ZF-unnormalised-gene-expression_data.csv"))
+write.csv(counts,file=here("analysis/salmon/ZE-SE-unnormalised-gene-expression_data.csv"))
 ############## change export location name
 
 #' ## Data normalisation 
@@ -155,13 +227,13 @@ write.csv(counts,file=here("analysis/salmon/ZE-ZF-unnormalised-gene-expression_d
 dds <- DESeqDataSetFromMatrix(
   countData = counts,
   colData = samples,
-  design = ~ Time * Tissue)
+  design = ~ Experiment)
 
 #want to duplicate S here, rename each twin to FMG and ZE, and give them unique NGI.IDs
 
 
 
-save(dds,file=here("analysis/salmon/ZE-ZF-Dataset-dds.rda"))
+save(dds,file=here("analysis/salmon/ZE-SE-Dataset-dds.rda"))
 
 #' Check the size factors (i.e. the sequencing library size effect)
 #' 
@@ -198,7 +270,7 @@ pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
                     samples)
 
-ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Experiment,shape=Tissue)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
   scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
@@ -261,3 +333,4 @@ heatmap.2(t(scale(t(vst[sels[[vstCutoff]],]))),
 #' ```{r session info, echo=FALSE}
 #' sessionInfo()
 #' ```
+

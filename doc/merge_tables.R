@@ -89,6 +89,20 @@ t
 
 ZE_Dataset_v3 <- t
 write_csv(ZE_Dataset_v3, path = "doc/ZE_Dataset_v3.csv")
+##replace 739 and 738 with B9 and B8, only in Tissue
+
+ZE_Dataset_v4 <- ZE_Dataset_v3
+ZE_Dataset_v4$Time <- str_replace(ZE_Dataset_v4$Time,"738","B8")
+ZE_Dataset_v4$Time <- str_replace(ZE_Dataset_v4$Time,"739","B9")
+
+mod <- filter(ZE_Dataset_v4,NGI.ID == "P11562_148")
+mod$Tissue <- str_replace(mod$Tissue,"FMG","ZE")
+mod$User.ID <- str_replace(mod$User.ID,"FMG","ZE")
+mod$Replicate <- str_replace(mod$Replicate,"FMG","ZE")
+ZE_Dataset_v4[44,] <- mod
+
+write_csv(ZE_Dataset_v4, path = "doc/ZE_Dataset_v4.csv")
+
 
 ##need to rename the B3 FMG 201 sample to B3 S 201.
 
@@ -136,29 +150,29 @@ print(unification3)
 sampleSE <- somaticEmbryogenesis.samples %>%
   rename(NGI.ID = ScilifeID,
          User.ID = SubmittedID,
-         Tissue = Description)
+         Tissue = Stages)
 ##replace tissue name with simple name, depending on the stage number. Then, remove stages column.
 sampleSE
 
-sampleSEWorkingFile <- str_replace(sampleSE$Tissue,".*Non-Embryogenic","Non-EMB") %>%
-  str_replace(".*Proliferation.*","PEM") %>%
-  str_replace(".*Early stage maturing embryos.*","DKM") %>%
-  str_replace(".*Start maturation.*","SM") %>%
-  str_replace(".*Late stage maturing.*","LSM") %>%
-  str_replace(".*Start dessication.*","SD") %>%
-  str_replace(".*End of dessication.*","ED") %>%
-  str_replace(".*oot.*","RO") %>%
-  str_replace(".*lanting.*","PLS") %>%
-  str_replace(".*Proliferation.*","PEM") %>%
-  str_replace(".*Start-dess.*","SD") %>%
-  str_replace(".*Start-Mat.*","DKM") %>%
-  str_replace(".*Start-mat.*","LSM") %>%
-  str_replace(".*Mid-stage-mat.*","SM") %>%
-  str_replace(".*Dessication.*","ED")
+#sampleSEWorkingFile <- str_replace(sampleSE$Tissue,".*Non-Embryogenic","Non-EMB") %>%
+#  str_replace(".*Proliferation.*","PEM") %>%
+#  str_replace(".*Early stage maturing embryos.*","DKM") %>%
+#  str_replace(".*Start maturation.*","SM") %>%
+#  str_replace(".*Late stage maturing.*","LSM") %>%
+#  str_replace(".*Start dessication.*","SD") %>%
+#  str_replace(".*End of dessication.*","ED") %>%
+#  str_replace(".*oot.*","RO") %>%
+#  str_replace(".*lanting.*","PLS") %>%
+#  str_replace(".*Proliferation.*","PEM") %>%
+#  str_replace(".*Start-dess.*","SD") %>%
+#  str_replace(".*Start-Mat.*","DKM") %>%
+#  str_replace(".*Start-mat.*","LSM") %>%
+#  str_replace(".*Mid-stage-mat.*","SM") %>%
+#  str_replace(".*Dessication.*","ED")
   
-sampleSEWorkingFile
-sampleSE["Tissue"] <- sampleSEWorkingFile
-sampleSE <- subset(sampleSE, select = -c(Stages))
+#sampleSEWorkingFile
+#sampleSE["Tissue"] <- sampleSEWorkingFile
+sampleSE <- subset(sampleSE, select = -c(Description))
 sampleSE
 sampleSEWorkingFile <- str_replace(sampleSE$NGI.ID,".*XX_","") %>%
   str_replace("_d.*","")
@@ -197,7 +211,10 @@ sampleSEmerge <- full_join(sampleSE.2, sampleSE.2b)
 sampleSEmerge <- full_join(sampleSEmerge, sampleSE.3)
 sampleSE <- sampleSEmerge
 
-unification4 <- full_join(unification3, sampleSE)
+int_to_char <- sampleSE
+int_to_char$Tissue <- as.character(sampleSE$Tissue)
+
+unification4 <- full_join(unification3, int_to_char)
 print(unification4)
 
 
@@ -207,7 +224,7 @@ tissue <- unification4$Tissue
 tissue
 ngi <- unification4$NGI.ID
 experiment <- ngi
-experiment <- str_replace(ngi,"P11562.*","Zygotic")
+experiment <- str_replace(ngi,"P11562.*","Zygotic Embryogenesis")
 experiment <- str_replace(experiment, "P1790.*","29Seed")
 experiment <- str_replace(experiment, "P2228.*","Somatic Embryogenesis Germinants")
 experiment <- str_replace(experiment, "P464.*","Somatic Embryogenesis")
@@ -220,4 +237,16 @@ unification4
 write_csv(unification4, path = "doc/testmerge_complete_v5.csv")
 write_csv(unification4, path = "doc/4Datasets_v5.csv")
 
+Combined_Dataset_v6 <- unification4
+Combined_Dataset_v6$Time <- str_replace(Combined_Dataset_v6$Time,"738","B8")
+Combined_Dataset_v6$Time <- str_replace(Combined_Dataset_v6$Time,"739","B9")
+
+mod <- filter(Combined_Dataset_v6,NGI.ID == "P11562_148")
+mod$Tissue <- str_replace(mod$Tissue,"FMG","ZE")
+mod$User.ID <- str_replace(mod$User.ID,"FMG","ZE")
+mod$Replicate <- str_replace(mod$Replicate,"FMG","ZE")
+Combined_Dataset_v6[44,] <- mod
+
+
+write_csv(Combined_Dataset_v6, path = "doc/4Datasets_v6.csv")
 
