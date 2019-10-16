@@ -17,5 +17,6 @@ fi
 # submit
 sbatch -A $account --mem=128GB --mail-user=$mail \
 -e $out/aggregate.err -o $out/aggregate.err \
--J ZE-aggregate ../UPSCb-common/pipeline/runSeidrAggregate.sh $out $in/*.sf 
+-J ZE-aggregate ../UPSCb-common/pipeline/runSeidrAggregate.sh $out \
+$(find $in -name "*.sf" -exec realpath "{}" \;)
 
