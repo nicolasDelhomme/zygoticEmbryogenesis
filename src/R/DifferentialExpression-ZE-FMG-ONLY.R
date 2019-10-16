@@ -178,14 +178,19 @@ ndeg3 <- sapply(2:10,function(i){
                            export = FALSE,plot = FALSE),length)
 })
 
+barnames <- resultsNames(dds)[2:10]
+barnames <- str_replace_all(barnames,"_","")
+barnames <- str_replace(barnames,"Time"," ")
+barnames <- str_replace(barnames,"vs"," vs ")
+
 #differential expression based only on Time (reference is Time_B1)
-colnames(ndeg3) <- resultsNames(dds)[2:10]
+colnames(ndeg3) <- barnames
 rownames(ndeg3) <- c("all","up","dn")
 barplot(ndeg3,beside = TRUE, las=2, horiz=F)
 
 #same as above, but showing in groups of "all" "up" and "down" regulated.
 ndeg3trans <- t(ndeg3)
-rownames(ndeg3trans) <- resultsNames(dds)[2:10]
+rownames(ndeg3trans) <- barnames
 colnames(ndeg3trans) <- c("all","up","dn")
 barplot(ndeg3trans,beside = TRUE, las=2, horiz=F)
 
@@ -220,14 +225,18 @@ ndeg4 <- sapply(12:20,function(i){
                            export = FALSE,plot = FALSE),length)
 })
 
+barnames <- resultsNames(dds)[12:20]
+barnames <- str_replace(barnames,"Time","")
+barnames <- str_replace(barnames,".Tissue"," ")
+
 #differential expression based only on Time (reference is Time_B1)
-colnames(ndeg4) <- resultsNames(dds)[12:20]
+colnames(ndeg4) <- barnames
 rownames(ndeg4) <- c("all","up","dn")
 barplot(ndeg4,beside = TRUE, las=2, horiz=F)
 
 #same as above, but showing in groups of "all" "up" and "down" regulated.
 ndeg4trans <- t(ndeg4)
-rownames(ndeg4trans) <- resultsNames(dds)[12:20]
+rownames(ndeg4trans) <- barnames
 colnames(ndeg4trans) <- c("all","up","dn")
 barplot(ndeg4trans,beside = TRUE, las=2, horiz=F)
 ###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
@@ -292,25 +301,82 @@ barplot(ndeg6trans,beside = TRUE, las=2, horiz=F)
 
 
 
-ndeg6noneg <- sapply(12:20,function(i){
+
+
+
+
+###comparing ZE and FMG time points, with -1 on the previous time point of FMG
+ndeg7 <- sapply(12:20,function(i){
     vec <- rep(0,length(resultsNames(dds)))
     vec[i]<-1
-    vec[11]<-0.5
+    vec[i-10]<-1
+    if(i>12){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
+
+        vec[i-11] <- -1
+    }
     sapply(extract_results(dds,vst,vec,verbose = FALSE,
                            export = FALSE,plot = FALSE),length)
 })
 
+barnames <- resultsNames(dds)[12:20]
+barnames <- str_replace(barnames,"Time","")
+barnames <- str_replace(barnames,".Tissue"," ")
+
+
 #differential expression based only on Time (reference is Time_B1)
-colnames(ndeg6noneg) <- resultsNames(dds)[12:20]
-rownames(ndeg6noneg) <- c("all","up","dn")
-barplot(ndeg6noneg,beside = TRUE, las=2, horiz=F)
+colnames(ndeg7) <- barnames
+rownames(ndeg7) <- c("all","up","dn")
+barplot(ndeg7,beside = TRUE, las=2, horiz=F)
 
 #same as above, but showing in groups of "all" "up" and "down" regulated.
-ndeg6nonegtrans <- t(ndeg6noneg)
-rownames(ndeg6nonegtrans) <- resultsNames(dds)[12:20]
-colnames(ndeg6nonegtrans) <- c("all","up","dn")
-barplot(ndeg6nonegtrans,beside = TRUE, las=2, horiz=F)
+ndeg7trans <- t(ndeg7)
+rownames(ndeg7trans) <- barnames
+colnames(ndeg7trans) <- c("all","up","dn")
+barplot(ndeg7trans,beside = TRUE, las=2, horiz=F)
 ###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
+
+
+
+
+
+
+
+##0.5 for ZE and FMG Time points, -1 to previous FMG time point
+ndeg8 <- sapply(12:20,function(i){
+    vec <- rep(0,length(resultsNames(dds)))
+    vec[i]<-0.5
+    vec[i-10]<-1
+    if(i>12){
+        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
+        vec[i-11] <- -1        
+    }
+    sapply(extract_results(dds,vst,vec,verbose = FALSE,
+                           export = FALSE,plot = FALSE),length)
+})
+
+barnames <- resultsNames(dds)[12:20]
+barnames <- str_replace(barnames,"Time","")
+barnames <- str_replace(barnames,".Tissue"," ")
+
+#differential expression based only on Time (reference is Time_B1)
+colnames(ndeg8) <- barnames
+rownames(ndeg8) <- c("all","up","dn")
+barplot(ndeg8,beside = TRUE, las=2, horiz=F)
+
+#same as above, but showing in groups of "all" "up" and "down" regulated.
+ndeg8trans <- t(ndeg8)
+rownames(ndeg8trans) <- barnames
+colnames(ndeg8trans) <- c("all","up","dn")
+barplot(ndeg8trans,beside = TRUE, las=2, horiz=F)
+###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
+
+
+
+
+
+
+
 
 
 
@@ -335,6 +401,17 @@ ZEB4B5B6 <- extract_results(dds,vst,c(0,0,0,0,0,
                                           colData(dds)$Time),
                             sample_sel=colData(dds)$Tissue!="FMG")
 
+ZEB4B5B6minus <- extract_results(dds,vst,c(0,0,0,0,0,
+                                      0,0,0,0,0,
+                                      1,0,-1,0.5,0.5,
+                                      0.5,0,0,0,0),
+                            verbose = TRUE, export = FALSE,plot = FALSE,
+                            default_prefix="Tissue_ZE_vs_S_", 
+                            labels=paste0(colData(dds)$Tissue,
+                                          colData(dds)$Time),
+                            sample_sel=colData(dds)$Tissue!="FMG")
+
+
 ZEB7B8B910 <- extract_results(dds,vst,c(0,0,0,0,0,
                                        0,0,0,0,0,
                                        1,0,0,0,0,
@@ -344,6 +421,17 @@ ZEB7B8B910 <- extract_results(dds,vst,c(0,0,0,0,0,
                              labels=paste0(colData(dds)$Tissue,
                                            colData(dds)$Time),
                              sample_sel=colData(dds)$Tissue!="FMG")
+
+ZEB7B8B910minus <- extract_results(dds,vst,c(0,0,0,0,0,
+                                        0,0,0,0,0,
+                                        1,0,0,0,0,
+                                        -1,0.5,0.5,0.5,0.5),
+                              verbose = TRUE, export = FALSE,plot = FALSE,
+                              default_prefix="Tissue_ZE_vs_S_", 
+                              labels=paste0(colData(dds)$Tissue,
+                                            colData(dds)$Time),
+                              sample_sel=colData(dds)$Tissue!="FMG")
+
 
 
 

@@ -270,7 +270,7 @@ pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
                     samples)
 
-ggplot(pc.dat,aes(x=PC1,y=PC2,col=Experiment,shape=Tissue)) + 
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
   scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
