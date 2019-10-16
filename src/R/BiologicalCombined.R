@@ -52,7 +52,19 @@ samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v6.csv",
 
 ##need to delete User.ID, Sample.ID, Replicate, Mreads and X..Q30 (columns 2,4,6,7,8)
 samples <- subset(samples, select = -c(User.ID, Sample.ID, Replicate, Mreads, X..Q30) )
-samples
+samples$Experiment
+
+sZE <- subset(samples,samples$Experiment == "Zygotic Embryogenesis") 
+s29 <- subset(samples,samples$Experiment == "29Seed")
+sSG <- subset(samples,samples$Experiment == "Somatic Embryogenesis Germinants")
+sSE <- subset(samples,samples$Experiment == "Somatic Embryogenesis")
+
+sSE$Time <- sSE$Tissue
+sSE$Time <- str_c("B",sSE$Time)
+sSE$Tissue <- c("SE")
+
+samples <- bind_rows(sZE,s29,sSG,sSE)
+samples$Tissue <- factor(samples$Tissue)
 
 #' # Analysis
 #' ## Raw data
