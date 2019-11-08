@@ -54,11 +54,11 @@ samples <- read_csv("~/Git/zygoticEmbryogenesis/doc/4Datasets_v6.csv",
 ##need to delete User.ID, Sample.ID, Replicate, Mreads and X..Q30 (columns 2,4,6,7,8)
 samples <- filter(samples, !grepl("P11562_112",NGI.ID))
 samples <- subset(samples, select = -c(User.ID, Sample.ID, Replicate, Mreads, X..Q30) )
-samples
+
 samplesZE <- subset(samples, samples$Experiment == "Zygotic Embryogenesis")
 samplesSEED <- subset(samples, samples$Experiment == "29Seed")
 samplesSE <- subset(samples, samples$Experiment == "Somatic Embryogenesis")
-
+view(samplesSE)
 
 
 
@@ -117,6 +117,7 @@ samplesZE_S_to_FMG$Tissue <- str_replace(samplesZE_S_to_FMG$Tissue,"S","FMG")
 samplesZE_S_to_ZE$NGI.ID <- str_replace(samplesZE_S_to_ZE$NGI.ID,"_","_B_")
 samplesZE_S_to_ZE$Tissue <- str_replace(samplesZE_S_to_ZE$Tissue,"S","ZE")
 
+#remove "S" Tissue
 samplesZE <- subset(samplesZE, samplesZE$Tissue != "S")
 countsZE <- countsZE[ ,samplesZE$NGI.ID]
 
@@ -309,11 +310,16 @@ destroy <- samples_SE_plus_ZE
 destroy <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$Experiment == "Zygotic Embryogenesis")
 destroy_SE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$Experiment == "Somatic Embryogenesis")
 
+#Remove time points from ZE dataset
 destroy <- subset(destroy,destroy$Time != "B1")
 destroy <- subset(destroy,destroy$Time != "B2")
 destroy <- subset(destroy,destroy$Time != "B3")
 destroy <- subset(destroy,destroy$Time != "B10")
 destroy$Time
+
+#Remove time points from SE dataset
+destroy_SE <- subset(destroy_SE,destroy_SE$Time != "B0")
+destroy_SE <- subset(destroy_SE,destroy_SE$Time != "B9")
 
 samples_SE_plus_ZE <- bind_rows(destroy, destroy_SE)
 ##delete from counts and samples_SE_plus_ZE
@@ -326,13 +332,52 @@ dds_SE_ZE <- DESeqDataSetFromMatrix(
   design = ~Experiment)
 samples_SE_plus_ZE$Time
 dds_SE_ZE <- dds_SE_ZE[,!(dds_SE_ZE$NGI.ID == "P11562_148")]
+dds_SE_ZE <- dds_SE_ZE[,!(dds_SE_ZE$NGI.ID == "P464_205")]
 colnames(dds_SE_ZE) <- dds_SE_ZE$NGI.ID
 dds$NGI.ID
 samples_SE_plus_ZE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$NGI.ID != "P11562_148")
+samples_SE_plus_ZE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$NGI.ID != "P464_205")
+samples_SE_plus_ZE$NGI.ID
 save(dds_SE_ZE,file=here("analysis/salmon/ZE-SE-dds.rda"))
+samples_SE_plus_ZE$Time
+
+
+
+#Unique model using only B4-B6 time points, with SE and ZE tissue, using the Tissue * Time Model.
+#remove all samples with times that are not B4-B6, and remove FMG tissue
+samples.sz.ttmodel <- subset(samples_SE_plus_ZE, samples_SE_plus_ZE$Tissue != "FMG")
+samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B0"))
+samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B1"))
+samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B2"))
+samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B3"))
+#samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B7"))
+#samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B8"))
+samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B9"))
+samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B10"))
+#do the removal after the model... Keep only times that are seen in both SE and ZE
+
+samples.sz.ttmodel <- subset(samples.sz.ttmodel,samples.sz.ttmodel$NGI.ID != "P464_205")
+counts.sz.ttmodel <- counts_SE_plus_ZE
+counts.sz.ttmodel <- counts.sz.ttmodel[ ,samples.sz.ttmodel$NGI.ID]
+colnames(counts.sz.ttmodel) == samples.sz.ttmodel$NGI.ID
+
+
+
+dds.sz.ttmodel <- DESeqDataSetFromMatrix(
+  countData = counts.sz.ttmodel,
+  colData = samples.sz.ttmodel,
+  design = ~Tissue * Time)
+dds.sz.ttmodel <- dds.sz.ttmodel[,!(dds.sz.ttmodel$NGI.ID == "P464_205")]
+
+view(samples_SE_plus_ZE)
+subset(samples_SE_plus_ZE,samples_SE_plus_ZE$Experiment == "Somatic Embryogenesis")
+
+save(dds.sz.ttmodel,file=here("analysis/salmon/ZvsS-B4-B6-TTModel-dds.rda"))
+dds.sz.ttmodel.de$NGI.ID
 
 load(here("analysis/salmon/ZE-29Seed-dds.rda"))
 load(here("analysis/salmon/ZE-SE-dds.rda"))
+load(here("analysis/salmon/ZvsS-B4-B6-TTModel-dds.rda"))
 
 suppressPackageStartupMessages(library(sva))
 suppressPackageStartupMessages(library(bladderbatch))
@@ -356,6 +401,10 @@ vst <- vst - min(vst)
 vsd_SE_ZE <- varianceStabilizingTransformation(dds_SE_ZE,blind=FALSE)
 vst_SE_ZE <- assay(vsd_SE_ZE)
 vst_SE_ZE <- vst_SE_ZE - min(vst_SE_ZE)
+
+vsd.sz.ttmodel <- varianceStabilizingTransformation(dds.sz.ttmodel,blind=FALSE)
+vst.sz.ttmodel <- assay(vsd.sz.ttmodel)
+vst.sz.ttmodel <- vst.sz.ttmodel - min(vst.sz.ttmodel)
 
 #limma
 source(here("UPSCb-common/src/R/percentile.R"))
@@ -435,7 +484,7 @@ pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
                     samplesfinal)
 
-ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment)) + 
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Tissue,shape=Tissue)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
   scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
@@ -455,7 +504,7 @@ ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",p
                                                 yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
 }
 #########################################################################################################################
-###here we use the model on ZE and SE
+###here we use the model on ZE and SE - full samples
 {
 mat_SE_ZE <- assay(vsd_SE_ZE)
 x_SE_ZE <- mat_SE_ZE
@@ -509,28 +558,87 @@ ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",p
                                                 yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
 }
 
+###here we use the model on samples.sz.ttmodel
+{
+  mat.sz.ttmodel <- assay(vsd.sz.ttmodel)
+  x.sz.ttmodel <- mat.sz.ttmodel
+  
+  as.matrix(x.sz.ttmodel) - beta %*% t(X.batch)
+  fullbatch <- vsd.sz.ttmodel$Experiment
+  fullbatch <- as.factor(fullbatch)
+  contrasts(fullbatch) <- contr.sum(levels(fullbatch))
+  fullbatch <- model.matrix(~fullbatch)[, -1, drop = FALSE]
+  X.fullbatch <- fullbatch
+  as.matrix(mat.sz.ttmodel) - beta %*% t(X.fullbatch)
+  
+  vsd.sz.ttmodel <- as.matrix(mat.sz.ttmodel) - beta %*% t(X.fullbatch)
+  vst.sz.ttmodel <- vsd.sz.ttmodel
+  vst.sz.ttmodel <- vst.sz.ttmodel - min(vst.sz.ttmodel)
+  
+  # plot PCA ZE vs. SE
+  pc <- prcomp(t(vst.sz.ttmodel))
+  
+  percent <- round(summary(pc)$importance[2,]*100)
+  
+  samples$NGI.ID
+  samplesfinal <- samples.sz.ttmodel
+  
+  
+  #' ### 2D
+  pc.dat <- bind_cols(PC1=pc$x[,1],
+                      PC2=pc$x[,2],
+                      samplesfinal)
+  
+  ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment)) + 
+    geom_point(size=2) + 
+    ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
+    scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
+    scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
+  
+  #' ### Interactive PCA Plot
+  suppressPackageStartupMessages(library(plotly))
+  
+  interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment,text=NGI.ID)) +
+    geom_point(size=2) +
+    ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
+  
+  
+  
+  
+  ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+                                                  yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+}
 
 
 
+#####3D INTERACTIVE PCA PLOT
+source(here("Rtoolbox/src/plot3Dpca.R"))
+
+cust_colors = c("#bf0000","#bf6c00","#bfac00","#89bf00","#00bf43","#00bfa9","#0092bf","#0049bf","#8900bf")
+
+metaDF <- data.frame(dds_SE_ZE$NGI.ID,dds_SE_ZE$Time,dds_SE_ZE$Tissue,dds_SE_ZE$Experiment)
+metaDF$NGI.ID <- as.character(metaDF$NGI.ID)
+colnames(metaDF) <- c("NGI.ID","Time","Tissue","Experiment")
+D3Time <- plot3Dpca(t(vst_SE_ZE), metaDF, c("Time"),colors = cust_colors, title="ZE vs SE batch corrected (Time)", inverse=c(FALSE,FALSE,FALSE))
+D3Tissue <- plot3Dpca(t(vst_SE_ZE), metaDF, c("Tissue"), title="ZE vs SE batch corrected (Tissue)", inverse=c(FALSE,FALSE,FALSE))
+
+D3Time
+D3Tissue
+
+nrow(vst_SE_ZE)
+vst_SE_ZE
+
+###REMOVE B0 and B9, DETERMINE WHAT STAGES ARE THE ONES THAT GET CLOSE TO THE ZE TISSUE
+###3 STAGES IN SE, 2nd STAGE APPEARS TO HAVE THE ACTUAL EMBRYOGENESIS SHIFT AND CHANGE, THEN RETURNS
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+###export the dds_SE_ZE for use in the DE script
+loadings(pc)
 
 
 
 #####using LIMMA unaltered
-dds_limma <- DESeqDataSetFromMatrix(
+{dds_limma <- DESeqDataSetFromMatrix(
   countData = counts,
   colData = samples,
   design = ~ Experiment)
@@ -589,21 +697,460 @@ ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",p
 
 ##########Limma looks like the best
 ##########apply this data, and put it together with SE.
+}
+
+library("devtools")
+install_github("kassambara/factoextra")
+library("factoextra")
+
+got_pc <- get_pca(pc, element = c("var", "ind"))
+
+got_pc$contrib
+
+top500 <- fviz_contrib(pc, choice = "var", axes = 1, top = 500)
+top100 <- fviz_contrib(pc, choice = "var", axes = 1, top = 100)
+top50 <- fviz_contrib(pc, choice = "var", axes = 1, top = 50)
+
+t<-top500
+top100
+top50
+
+#' Run the feature selection
+#' Filter for noise
+#' A cutoff at a VST value of 1 leaves about 32000 genes - is this adequate for the QA?
+conds <- factor(paste(dds_SE_ZE$Tissue,dds_SE_ZE$Time))
+sels <- rangeFeatureSelect(counts=vst_SE_ZE,
+                           conditions=conds,
+                           nrep=3)
+vstCutoff <- 7+1
+vst_SE_ZE #66056 rows cutoff
+vst_SE_ZE[sels[[vstCutoff]],] #42544 rows cutoff
+
+
+vst_SE_ZE_featureselected <- vst_SE_ZE[sels[[vstCutoff]],]
+# redo the PCA
+# plot PCA ZE vs. SE
+{
+pc <- prcomp(t(vst_SE_ZE_featureselected))
+pc <- prcomp(t(vst_SE_ZE))
+  
+percent <- round(summary(pc)$importance[2,]*100)
+
+samples$NGI.ID
+samplesfinal <- samples_SE_plus_ZE
+
+#' ### 2D
+pc.dat <- bind_cols(PC1=pc$x[,1],
+                    PC2=pc$x[,2],
+                    samplesfinal)
+
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
+  geom_point(size=2) + 
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
+  scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
+  scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
+
+#' ### Interactive PCA Plot
+suppressPackageStartupMessages(library(plotly))
+
+interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment,text=NGI.ID)) +
+  geom_point(size=2) +
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
+
+
+
+
+ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+                                                yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+
+metaDF <- data.frame(dds_SE_ZE$NGI.ID,dds_SE_ZE$Time,dds_SE_ZE$Tissue,dds_SE_ZE$Experiment)
+metaDF$NGI.ID <- as.character(metaDF$NGI.ID)
+colnames(metaDF) <- c("NGI.ID","Time","Tissue","Experiment")
+D3Time <- plot3Dpca(t(vst_SE_ZE_featureselected), metaDF, c("Time"),colors = cust_colors, title="ZE vs SE batch corrected (Time)", inverse=c(FALSE,FALSE,FALSE))
+D3Tissue <- plot3Dpca(t(vst_SE_ZE_featureselected), metaDF, c("Tissue"), title="ZE vs SE batch corrected (Tissue)", inverse=c(FALSE,FALSE,FALSE))
+}
+
+got_pc <- get_pca(pc, element = c("var", "ind"))
+top500 <- fviz_contrib(pc, choice = "var", axes = 1, top = 500)
+top50 <- fviz_contrib(pc, choice = "var", axes = 1, top = 50)
+toptop <- fviz_contrib(pc, choice = "var", axes = 1, top = 13346)
+t<-top500
+# see if you can extract the "red-line"
+
+D1 <- got_pc$contrib[,1]
+got_pc$cor
+samples_SE_plus_ZE
+
+
+# if not play with the contributions
+# which(cumsum(sort(t$data$contrib,decreasing = TRUE))>=50)[1]
+# 
+(t$data$contrib - mean(t$data$contrib)) > 0
+which(cumsum(sort(t$data$contrib,decreasing = TRUE))>=50)[1]
+which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=50)[1] #485 genes
+which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=100)[1] #13346 genes
+
+##this gives me the sorted genes in decreasing order - know that the first 485 give me 50%, only keep the ones above 485
+genes <- sort(got_pc$contrib[,1],decreasing = TRUE)
+#genes that give 50% of PC1
+which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=50)[1] #485 genes
+which(cumsum(sort(got_pc$contrib[,2],decreasing = TRUE))>=50)[1] #526 genes
+which(cumsum(sort(got_pc$contrib[,3],decreasing = TRUE))>=50)[1] #592 genes
+genes_PC1_50 <- genes[1:485]
+#genes that give 10% of PC1
+which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=10)[1] #485 genes
+genes_PC1_10 <- genes[1:which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=10)[1]]
+
+genes_PC1_50 <- genes[1:which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=50)[1]]
+genes_PC2_50 <- genes[1:which(cumsum(sort(got_pc$contrib[,2],decreasing = TRUE))>=50)[1]]
+genes_PC3_50 <- genes[1:which(cumsum(sort(got_pc$contrib[,3],decreasing = TRUE))>=50)[1]]
+
+genes_PC1_10[1]
+names(genes_PC1_10[1])
+# look at line plots
+#' 1. plot specific gene expression
+"line_plot" <- function(dds,vst,gene_id){
+  sel <- grepl(gene_id,rownames(vst))
+  stopifnot(sum(sel)==1)
+  
+  return(
+    # TODO - adjust the x, col and group (to your metadata)
+    
+    ggplot(bind_cols(as.data.frame(colData(dds)),
+                     melt(vst[sel,])),
+           aes(x=Time,y=value,col=Tissue,group=Tissue)) +
+      geom_point() + geom_smooth() +
+      scale_y_continuous(name="VST expression") + 
+      ggtitle(label=paste("Expression for: ",gene_id))
+  )
+}
+
+line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[1]))
+line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[2]))
+line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[4]))
+line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[12]))
+
+genes_PC1_10_names <- names(genes_PC1_10)
+genes_PC1_50_names <- names(genes_PC1_50)
+genes_PC2_50_names <- names(genes_PC2_50)
+genes_PC3_50_names <- names(genes_PC3_50)
+
+background <- rownames(vst_SE_ZE_featureselected)
+background <- str_replace(background,"[.]1","")
+genes_PC1_10_names <- str_replace(genes_PC1_10_names,"[.]1","")
+rownames(vst_SE_ZE_featureselected)
+enr <- gopher(genes = genes_PC1_10_names, background = background,task = "go",url = "pabies")
+
+#processing gene_names so that they remove the .1 at the end of every gene name identity (gopher cannot use it if its there)
+genes_PC1_50_names <- names(genes_PC1_50)
+genes_PC1_50_names <- str_replace(genes_PC1_50_names,"[.]1","")
+genes_PC2_50_names <- str_replace(genes_PC2_50_names,"[.]1","")
+genes_PC3_50_names <- str_replace(genes_PC3_50_names,"[.]1","")
+
+#normal gopher, with featureselected background
+enr <- gopher(genes = genes_PC1_50_names, background = background,task = c("go","mapman"),url = "pabies")
+enr2 <- gopher(genes = genes_PC2_50_names, background = background,task = c("go","mapman"),url = "pabies")
+enr3 <- gopher(genes = genes_PC3_50_names, background = background,task = c("go","mapman"),url = "pabies")
+
+##testing without the featureselected background
+enrnoback <- gopher(genes = genes_PC1_50_names, background = NULL,task = c("go","mapman"),url = "pabies")
+enr2noback <- gopher(genes = genes_PC2_50_names, background = NULL,task = c("go","mapman"),url = "pabies")
+enr3noback <- gopher(genes = genes_PC3_50_names, background = NULL,task = c("go","mapman"),url = "pabies")
+
+# gopher
+source(here("UPSCb-common/src/R/gopher.R"))
+enr <- gopher(genes = "contrib", background = "the genenames selected fro featureSelect",task = c("go","mapman"),url = "pabies")
+  
+enr2$go$id
+enr3$go$id
+
+commons1 <- str_subset(enr$go$id,enr2$go$id)
+commons2 <- str_subset(enr$go$id,enr3$go$id)
+commons3 <- str_subset(enr2$go$id,enr3$go$id)
+
+commons1
+commons2
+commons3
+str_subset(commons1, commons3)
+str_subset(commons1, commons2)
+str_subset(commons2, commons3)
+
+# extract the ID,padj columns and perform a visualization in REVIGO (or ask Alonso for his code to plot treemaps)
+enr_exfil <- subset(enr$go, select = c(id, padj))
+genes_PC1_50_names
+enr_exfil
+bind_cols(unlist(genes_PC1_50_names),enr_exfil)
+
+source(here("Rtoolbox/src/plotEnrichedTreemap.R"))
+
+genes_PC1_50_names
+enr$go$id
+enr2
+enr3
+
+#PC1 GO and Mapman Treemap
+plotEnrichedTreemap(enr, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr, enrichment = "mapman", clusterColor = "#1B75BC")
+
+#PC2 GO and Mapman Treemap
+plotEnrichedTreemap(enr2, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr2, enrichment = "mapman", clusterColor = "#1B75BC")
+
+#PC3 GO and Mapman Treemap
+plotEnrichedTreemap(enr3, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr3, enrichment = "mapman", clusterColor = "#1B75BC")
+
+#PC1 GO and Mapman Noback
+plotEnrichedTreemap(enrnoback, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enrnoback, enrichment = "mapman", clusterColor = "#1B75BC")
+
+#PC2 GO and Mapman Noback
+plotEnrichedTreemap(enr2noback, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr2noback, enrichment = "mapman", clusterColor = "#1B75BC")
+
+#PC3 GO and Mapman Noback
+plotEnrichedTreemap(enr3noback, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr3noback, enrichment = "mapman", clusterColor = "#1B75BC")
 
 
 
 
 
+enr$go$name
+enr2$go$name
+enr3$go$name
+
+enrnoback$go$name
+enr2noback$go$name
+enr3noback$go$name
+
+str_subset(enrnoback$go$name, enr3noback$go$name)
+
+
+
+samples_SE_plus_ZE$NGI.ID
+
+####redo analysis, but remove FMG completely from the equation.
+{
+samples_SE_plus_ZE_minusFMG <- subset(samples_SE_plus_ZE, samples_SE_plus_ZE$Tissue != "FMG")
+##delete from counts and samples_SE_plus_ZE
+dds_SE_ZE_minusFMG <- dds_SE_ZE_minusFMG[,(dds_SE_ZE_minusFMG$Tissue == "FMG")]
+
+
+dds_SE_ZE_minusFMG <- dds_SE_ZE_minusFMG[,(dds_SE_ZE_minusFMG$NGI.ID == samples_SE_plus_ZE_minusFMG$NGI.ID)]
+dds_SE_ZE_minusFMG$NGI.ID
+
+vsd_SE_ZE_minusFMG <- varianceStabilizingTransformation(dds_SE_ZE_minusFMG,blind=FALSE)
+vst_SE_ZE_minusFMG <- assay(vsd_SE_ZE_minusFMG)
+vst_SE_ZE_minusFMG <- vst_SE_ZE_minusFMG - min(vst_SE_ZE_minusFMG)
+#' Run the feature selection
+#' Filter for noise
+#' A cutoff at a VST value of 1 leaves about 32000 genes - is this adequate for the QA?
+conds <- factor(paste(dds_SE_ZE_minusFMG$Tissue,dds_SE_ZE_minusFMG$Time))
+sels <- rangeFeatureSelect(counts=vst_SE_ZE_minusFMG,
+                           conditions=conds,
+                           nrep=3)
+
+vstCutoff <- 4+1
+vst_SE_ZE_minusFMG #66056 rows cutoff
+vst_SE_ZE_minusFMG[sels[[vstCutoff]],] #42544 rows cutoff
+
+vst_SE_ZE_minusFMG_featureselected <- vst_SE_ZE_minusFMG[sels[[vstCutoff]],]
+
+pc <- prcomp(t(vst_SE_ZE_minusFMG_featureselected))
+#' ### 2D
+{
+pc.dat <- bind_cols(PC1=pc$x[,1],
+                    PC2=pc$x[,2],
+                    samples_SE_plus_ZE_minusFMG)
+
+ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
+  geom_point(size=2) + 
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
+  scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
+  scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
+
+#' ### Interactive PCA Plot
+suppressPackageStartupMessages(library(plotly))
+
+interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Experiment,text=NGI.ID)) +
+  geom_point(size=2) +
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
+
+dds_SE_ZE_minusFMG$Tissue
+
+
+ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+                                                yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+
+metaDF_minusFMG <- data.frame(dds_SE_ZE_minusFMG$NGI.ID,dds_SE_ZE_minusFMG$Time,dds_SE_ZE_minusFMG$Tissue,dds_SE_ZE_minusFMG$Experiment)
+colnames(metaDF_minusFMG) <- c("NGI.ID","Time","Tissue","Experiment")
+metaDF_minusFMG$dds_SE_ZE_minusFMG.NGI.ID <- as.character(metaDF_minusFMG$NGI.ID)
+
+D3Time <- plot3Dpca(t(vst_SE_ZE_minusFMG_featureselected), metaDF_minusFMG, c("Time"),colors = cust_colors, title="ZE vs SE batch corrected (Time)", inverse=c(FALSE,FALSE,FALSE))
+D3Tissue <- plot3Dpca(t(vst_SE_ZE_minusFMG_featureselected), metaDF_minusFMG, c("Tissue"), title="ZE vs SE batch corrected (Tissue)", inverse=c(FALSE,FALSE,FALSE))
+
+D3Time
+D3Tissue
+}
+}
 
 
 
 
-
-
-
-
-
-
-
+{
+  got_pc <- get_pca(pc, element = c("var", "ind"))
+  
+  # if not play with the contributions
+  # which(cumsum(sort(t$data$contrib,decreasing = TRUE))>=50)[1]
+  # 
+  
+  ##this gives me the sorted genes in decreasing order - know that the first 485 give me 50%, only keep the ones above 485
+  genes <- sort(got_pc$contrib[,1],decreasing = TRUE)
+  #genes that give 50% of PC1
+  which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=50)[1] #485 genes
+  which(cumsum(sort(got_pc$contrib[,2],decreasing = TRUE))>=50)[1] #526 genes
+  which(cumsum(sort(got_pc$contrib[,3],decreasing = TRUE))>=50)[1] #592 genes
+  genes_PC1_50 <- genes[1:485]
+  #genes that give 10% of PC1
+  which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=10)[1] #485 genes
+  genes_PC1_10 <- genes[1:which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=10)[1]]
+  
+  genes <- sort(got_pc$contrib[,1],decreasing = TRUE)
+  genes_PC1_50 <- genes[1:which(cumsum(sort(got_pc$contrib[,1],decreasing = TRUE))>=50)[1]]
+  genes <- sort(got_pc$contrib[,2],decreasing = TRUE)
+  genes_PC2_50 <- genes[1:which(cumsum(sort(got_pc$contrib[,2],decreasing = TRUE))>=50)[1]]
+  genes <- sort(got_pc$contrib[,3],decreasing = TRUE)
+  genes_PC3_50 <- genes[1:which(cumsum(sort(got_pc$contrib[,3],decreasing = TRUE))>=50)[1]]
+  
+  length(genes_PC1_50)
+  length(genes_PC2_50)
+  length(genes_PC3_50)
+  
+  genes_PC1_10[1]
+  names(genes_PC1_10[1])
+  # look at line plots
+  #' 1. plot specific gene expression
+  "line_plot" <- function(dds,vst,gene_id){
+    sel <- grepl(gene_id,rownames(vst))
+    stopifnot(sum(sel)==1)
+    
+    return(
+      # TODO - adjust the x, col and group (to your metadata)
+      
+      ggplot(bind_cols(as.data.frame(colData(dds)),
+                       melt(vst[sel,])),
+             aes(x=Time,y=value,col=Tissue,group=Tissue)) +
+        geom_point() + geom_smooth() +
+        scale_y_continuous(name="VST expression") + 
+        ggtitle(label=paste("Expression for: ",gene_id))
+    )
+  }
+  
+  line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[1]))
+  line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[2]))
+  line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[4]))
+  line_plot(dds_SE_ZE,vst_SE_ZE,names(genes_PC1_10[12]))
+  
+  genes_PC1_50_names <- names(genes_PC1_50)
+  genes_PC2_50_names <- names(genes_PC2_50)
+  genes_PC3_50_names <- names(genes_PC3_50)
+  
+  background <- rownames(vst_SE_ZE_minusFMG_featureselected)
+  background <- str_replace(background,"[.]1","")
+  genes_PC1_10_names <- str_replace(genes_PC1_10_names,"[.]1","")
+  rownames(vst_SE_ZE_minusFMG_featureselected)
+  enr <- gopher(genes = genes_PC1_10_names, background = background,task = "go",url = "pabies")
+  
+  #processing gene_names so that they remove the .1 at the end of every gene name identity (gopher cannot use it if its there)
+  genes_PC1_50_names <- names(genes_PC1_50)
+  genes_PC1_50_names <- str_replace(genes_PC1_50_names,"[.]1","")
+  genes_PC2_50_names <- str_replace(genes_PC2_50_names,"[.]1","")
+  genes_PC3_50_names <- str_replace(genes_PC3_50_names,"[.]1","")
+  
+  # gopher
+  source(here("UPSCb-common/src/R/gopher.R"))
+  enr <- gopher(genes = "contrib", background = "the genenames selected fro featureSelect",task = c("go","mapman"),url = "pabies")
+  
+  #normal gopher, with featureselected background
+  enr <- gopher(genes = genes_PC1_50_names, background = background,task = c("go","mapman"),url = "pabies")
+  enr2 <- gopher(genes = genes_PC2_50_names, background = background,task = c("go","mapman"),url = "pabies")
+  enr3 <- gopher(genes = genes_PC3_50_names, background = background,task = c("go","mapman"),url = "pabies")
+  
+  ##testing without the featureselected background
+  enrnoback <- gopher(genes = genes_PC1_50_names, background = NULL,task = c("go","mapman"),url = "pabies")
+  enr2noback <- gopher(genes = genes_PC2_50_names, background = NULL,task = c("go","mapman"),url = "pabies")
+  enr3noback <- gopher(genes = genes_PC3_50_names, background = NULL,task = c("go","mapman"),url = "pabies")
+  
+  
+  
+  enr2$go$id
+  enr3$go$id
+  
+  commons1 <- str_subset(enr$go$id,enr2$go$id)
+  commons2 <- str_subset(enr$go$id,enr3$go$id)
+  commons3 <- str_subset(enr2$go$id,enr3$go$id)
+  
+  commons1
+  commons2
+  commons3
+  str_subset(commons1, commons3)
+  str_subset(commons1, commons2)
+  str_subset(commons2, commons3)
+  
+  # extract the ID,padj columns and perform a visualization in REVIGO (or ask Alonso for his code to plot treemaps)
+  enr_exfil <- subset(enr$go, select = c(id, padj))
+  genes_PC1_50_names
+  enr_exfil
+  bind_cols(unlist(genes_PC1_50_names),enr_exfil)
+  
+  source(here("Rtoolbox/src/plotEnrichedTreemap.R"))
+  
+  genes_PC1_50_names
+  enr$go$id
+  enr2
+  enr3
+  
+  #PC1 GO and Mapman Treemap
+  plotEnrichedTreemap(enr, enrichment = "go", namespace = "none")
+  plotEnrichedTreemap(enr, enrichment = "mapman", clusterColor = "#1B75BC")
+  
+  #PC2 GO and Mapman Treemap
+  plotEnrichedTreemap(enr2, enrichment = "go", namespace = "none")
+  plotEnrichedTreemap(enr2, enrichment = "mapman", clusterColor = "#1B75BC")
+  
+  #PC3 GO and Mapman Treemap
+  plotEnrichedTreemap(enr3, enrichment = "go", namespace = "none")
+  plotEnrichedTreemap(enr3, enrichment = "mapman", clusterColor = "#1B75BC")
+  
+  #PC1 GO and Mapman Noback
+  plotEnrichedTreemap(enrnoback, enrichment = "go", namespace = "none")
+  plotEnrichedTreemap(enrnoback, enrichment = "mapman", clusterColor = "#1B75BC")
+  
+  #PC2 GO and Mapman Noback
+  plotEnrichedTreemap(enr2noback, enrichment = "go", namespace = "none")
+  plotEnrichedTreemap(enr2noback, enrichment = "mapman", clusterColor = "#1B75BC")
+  
+  #PC3 GO and Mapman Noback
+  plotEnrichedTreemap(enr3noback, enrichment = "go", namespace = "none")
+  plotEnrichedTreemap(enr3noback, enrichment = "mapman", clusterColor = "#1B75BC")
+  
+  
+  
+  
+  
+  enr$go$name
+  enr2$go$name
+  enr3$go$name
+  
+  enr$mapman$name
+  enr2$mapman$name
+  enr3$mapman$name
+  
+  enrnoback$go$name
+  enr2noback$go$name
+  enr3noback$go$name
+  
+}
 
 
