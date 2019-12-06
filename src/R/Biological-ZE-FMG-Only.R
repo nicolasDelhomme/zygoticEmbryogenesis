@@ -72,7 +72,7 @@ samples <- filter(samples, !grepl("112",NGI.ID))
 ##remove those rows from original
 trim_samples <- subset(samples, samples$Tissue == "S")
 samples <- subset(samples, samples$Tissue != "S")
-samples
+#samples
 #trim_samples
 
 ##match NGI.IDs to filelist
@@ -80,23 +80,23 @@ samples
 lb.filterlist_trim <- lb.filterlist
 lb.filterlist_trim <- str_subset(lb.filterlist_trim, c(trim_samples$NGI.ID))
 lb.filterlist_trim <- append(lb.filterlist_trim, c(str_subset(lb.filterlist, "P11562_201")))
-#
-#
+
+
 lb.filterlist <- str_subset(lb.filterlist, c(trim_samples$NGI.ID), negate = TRUE)
 lb.filterlist <- str_subset(lb.filterlist, "P11562_201", negate = TRUE)
-#
-#
-#double_A <- trim_samples
-#double_B <- trim_samples
-#double_A$NGI.ID <- str_replace(double_A$NGI.ID,"P11562_","P11562_A_")
-#double_B$NGI.ID <- str_replace(double_B$NGI.ID,"P11562_","P11562_B_")
-#double_A$Tissue <- str_replace(double_A$Tissue,"S","FMG")
-#double_B$Tissue <- str_replace(double_B$Tissue,"S","ZE")
-#double_A$Replicate <- str_replace(double_A$Replicate,"S","FMG")
-#double_B$Replicate <- str_replace(double_B$Replicate,"S","ZE")
-#
-#lb.filterlist_trim_A <- lb.filterlist_trim
-#lb.filterlist_trim_B <- lb.filterlist_trim
+
+
+double_A <- trim_samples
+double_B <- trim_samples
+double_A$NGI.ID <- str_replace(double_A$NGI.ID,"P11562_","P11562_A_")
+double_B$NGI.ID <- str_replace(double_B$NGI.ID,"P11562_","P11562_B_")
+double_A$Tissue <- str_replace(double_A$Tissue,"S","FMG")
+double_B$Tissue <- str_replace(double_B$Tissue,"S","ZE")
+double_A$Replicate <- str_replace(double_A$Replicate,"S","FMG")
+double_B$Replicate <- str_replace(double_B$Replicate,"S","ZE")
+
+lb.filterlist_trim_A <- lb.filterlist_trim
+lb.filterlist_trim_B <- lb.filterlist_trim
 
 
 
@@ -107,21 +107,23 @@ lb.filterlist <- str_subset(lb.filterlist, "P11562_201", negate = TRUE)
 stopifnot(all(str_which(lb.filterlist, samples$NGI.ID) == 1:length(lb.filterlist)))
 ##assign names to the filtered filelist (which removed L002)
 names(lb.filterlist) <- samples$NGI.ID
-#names(lb.filterlist_trim_A) <- double_A$NGI.ID
-#names(lb.filterlist_trim_B) <- double_B$NGI.ID
+names(lb.filterlist_trim_A) <- double_A$NGI.ID
+names(lb.filterlist_trim_B) <- double_B$NGI.ID
 
 lb.filterlist <- lb.filterlist[samples$Tissue %in% c("ZE","FMG")] ##Are we only looking at ZE?
-#lb.filterlist_trim_A <- lb.filterlist_trim_A[double_A$Tissue %in% c("FMG")] ##Are we only looking at ZE?
-#lb.filterlist_trim_B <- lb.filterlist_trim_B[double_B$Tissue %in% c("ZE")] ##Are we only looking at ZE?
+lb.filterlist_trim_A <- lb.filterlist_trim_A[double_A$Tissue %in% c("FMG")] ##Are we only looking at ZE?
+lb.filterlist_trim_B <- lb.filterlist_trim_B[double_B$Tissue %in% c("ZE")] ##Are we only looking at ZE?
 
-
-#samples <- bind_rows(samples,double_A,double_B)
+samples$NGI.ID
+samples <- bind_rows(samples,double_A,double_B)
 samples <- subset(samples, select = -c(User.ID, Sample.ID, Replicate, Mreads, X..Q30) )
 
-#, lb.filterlist_trim_A, lb.filterlist_trim_B
+lb.filterlist <- c(lb.filterlist, lb.filterlist_trim_A, lb.filterlist_trim_B)
 
+length(samples$NGI.ID)
+length(lb.filterlist)
 
-#' Read the expression at the gene level (there is one transcript per gene)
+cbind()#' Read the expression at the gene level (there is one transcript per gene)
 lb.g <- suppressMessages(tximport(files = c(lb.filterlist), 
                                   type = "salmon",txOut=TRUE))
 
@@ -155,7 +157,9 @@ write.csv(counts,file=here("analysis/salmon/ZE-ZF-unnormalised-gene-expression_d
 dds <- DESeqDataSetFromMatrix(
   countData = counts,
   colData = samples,
-  design = ~ Time * Tissue)
+  design = ~ Tissue * Time)
+
+dds <- dds[,!(dds$NGI.ID == "P11562_148")]
 
 #want to duplicate S here, rename each twin to FMG and ZE, and give them unique NGI.IDs
 
@@ -175,6 +179,7 @@ boxplot(sizes, main="Sequencing libraries size factor")
 vsd <- varianceStabilizingTransformation(dds, blind=TRUE)
 vst <- assay(vsd)
 vst <- vst - min(vst)
+samplesfinal <- samples[!(samples$NGI.ID == "P11562_148"),]
 
 #' * Validation
 #' 
@@ -196,7 +201,7 @@ plot(cumsum(percent))
 #' ### 2D
 pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
-                    samples)
+                    samplesfinal)
 
 ggplot(pc.dat,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
   geom_point(size=2) + 
@@ -219,7 +224,7 @@ ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",p
 #' ### Heatmap
 #' Filter for noise
 #' A cutoff at a VST value of 1 leaves about 32000 genes - is this adequate for the QA?
-conds <- factor(paste(samples$Tissue,samples$Time))
+conds <- factor(paste(samplesfinal$Tissue,samplesfinal$Time))
 sels <- rangeFeatureSelect(counts=vst,
                            conditions=conds,
                            nrep=3)

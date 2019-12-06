@@ -42,3 +42,25 @@ rsconnect/
 #Data
 data
 data/
+
+#Analysis
+analysis
+analysis/
+
+#CSV files
+*.csv
+
+#Log files
+*.log
+
+#here()
+*.here
+
+#csvs
+*.csv
+
+#htmls
+*.html
+
+#.rda
+*.rda

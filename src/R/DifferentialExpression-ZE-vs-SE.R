@@ -118,6 +118,11 @@ dds.sz.ttmodel.de <- dds.sz.ttmodel.de[,!(dds.sz.ttmodel.de$NGI.ID == "P464_205"
 
 colnames(dds_SE_ZE) <- dds_SE_ZE$NGI.ID
 
+
+load(here("analysis/salmon/ZvsS-B4-B6-TTModel-dds.rda"))
+dds.sz.ttmodel
+design(dds.sz.ttmodel)
+
 dds_SE_ZE
 vst_SE_ZE
 
@@ -134,16 +139,16 @@ counts.sz.ttmodel
 dds.sz.ttmodel
 vst.sz.ttmodel
 
-conds <- factor(paste(dds.sz.ttmodel.de$Tissue,dds.sz.ttmodel.de$Time))
+conds <- factor(paste(dds.sz.ttmodel$Tissue,dds.sz.ttmodel$Time))
 sels <- rangeFeatureSelect(counts=vst.sz.ttmodel,
                            conditions=conds,
                            nrep=3)
-vstCutoff <- 6+1
+vstCutoff <- 5+1
 vst.sz.ttmodel #66056 rows cutoff
-vst.sz.ttmodel[sels[[vstCutoff]],] #11609 rows cutoff
+vst.sz.ttmodel[sels[[vstCutoff]],] #14997 rows cutoff
 
 vst.sz.ttmodel.featureselected <- vst.sz.ttmodel[sels[[vstCutoff]],]
-dds.sz.ttmodel.de <- DESeq(dds.sz.ttmodel.de)
+dds.sz.ttmodel <- DESeq(dds.sz.ttmodel)
 
 
 #' * Dispersion estimation
@@ -157,6 +162,217 @@ plotDispEsts(dds.sz.ttmodel.de)
 #' cannot assume that these two variables explain all the variance in the data,
 #' there is also an `Intercept` for the linear model.
 resultsNames(dds.sz.ttmodel.de)
+
+
+
+
+
+
+
+
+
+
+
+#export names
+ndeg_time_exnames_sz <- resultsNames(dds.sz.ttmodel)[3:6]
+ndeg_time_exnames_sz <- str_replace(ndeg_time_exnames_sz, "Time", "SE_Time")
+ndeg_time_exnames_sz <- str_replace(ndeg_time_exnames_sz, "vs_B4", "vs_B")
+ndeg_time_exnames_sz <- str_c(ndeg_time_exnames_sz, 4:7)
+
+ndeg_time_ze_exnames_sz <- resultsNames(dds.sz.ttmodel)[3:6]
+ndeg_time_ze_exnames_sz <- str_replace(ndeg_time_ze_exnames_sz, "Time", "ZE_Time")
+ndeg_time_ze_exnames_sz <- str_replace(ndeg_time_ze_exnames_sz, "vs_B4", "vs_B")
+ndeg_time_ze_exnames_sz <- str_c(ndeg_time_ze_exnames_sz, 4:7)
+
+ndeg_tissue_sz <- resultsNames(dds.sz.ttmodel)[2:6]
+ndeg_tissue_sz <- str_c(ndeg_tissue_sz[1], "_B",4:8)
+
+
+
+
+#ie what is the difference between genotypes ZE and FMG at the different time points
+ndeg_main_SZ <- sapply(6:10,function(i){
+    vec <- rep(0,length(resultsNames(dds.sz.ttmodel)))
+    if(i == 6){
+        vec[2] <- 1
+    }else{
+        vec[2] <- 1
+        vec[i] <- 1
+        #   vec[i-9] <- -1
+    }
+    print(vec)
+    #res.gene <- results(dds_DE_ZE_Cache, contrast = vec)
+    #print(res.gene["MA_191819g0010.1",])
+    
+    #return(res.gene["MA_191819g0010.1",]$log2FoldChange)
+    sapply(extract_results(dds.sz.ttmodel,vst.sz.ttmodel,vec,verbose = TRUE,
+                           export = TRUE,plot = FALSE, default_dir = here("analysis/DE/SZ_TissueEffect"), default_prefix = ndeg_tissue_sz[i-6]),length)
+})
+#Barplot
+{
+    #Barplot Preprocessing
+    {
+        barnames <- resultsNames(dds.sz.ttmodel)[7:10]
+        barnames <- str_replace_all(barnames,"_","")
+        barnames <- str_replace(barnames,"Time"," ")
+        barnames <- str_replace(barnames,"vs"," vs ")
+        barnames <- str_replace(barnames,"vs B1","vs B")
+        barnames <- str_c(barnames[1:4],4:7)
+        
+        barnames <- str_c("B",4:8)
+    }    
+    #Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
+    #differential expression based only on Time (reference is Time_B1)
+    colnames(ndeg_main_SZ) <- barnames
+    rownames(ndeg_main_SZ) <- c("all","up","dn")
+    
+    barplot(ndeg_main_SZ,beside = TRUE, las=2, horiz=F, ylim = c(0,25000))
+}
+
+
+resultsNames(dds_DE_ZE_Cache)
+resultsNames(dds.sz.ttmodel)
+
+#############THIS IS RIGHT
+#############THIS IS RIGHT
+#############THIS IS RIGHT
+
+ndeg_time_SZ <- sapply(3:6,function(i){
+    vec <- rep(0,length(resultsNames(dds.sz.ttmodel)))
+    vec[i] <- 1
+    if(i>3){
+        vec[i-1] <- -1
+    }
+    print(vec)
+    #res.gene <- results(dds_DE_ZE_Cache, contrast = vec)
+    #print(res.gene["MA_191819g0010.1",])
+    
+    #return(res.gene["MA_191819g0010.1",]$log2FoldChange)
+    sapply(extract_results(dds.sz.ttmodel,vst.sz.ttmodel,vec,verbose = TRUE,
+                           export = TRUE,plot = FALSE, default_dir = here("analysis/DE/SZ_SE_Time"), default_prefix = ndeg_time_exnames_sz[i-2]),length)
+})
+#Barplot
+{
+    #Barplot Preprocessing
+    {
+        barnames <- resultsNames(dds.sz.ttmodel)[3:6]
+        barnames <- str_replace_all(barnames,"_","")
+        barnames <- str_replace(barnames,"Time"," ")
+        barnames <- str_replace(barnames,"vs"," vs ")
+        barnames <- str_replace(barnames,"vs B4","vs B")
+        barnames <- str_c(barnames[1:4],4:7)
+    }    
+    #Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
+    #differential expression based only on Time (reference is Time_B1)
+    colnames(ndeg_time_SZ) <- barnames
+    rownames(ndeg_time_SZ) <- c("all","up","dn")
+    
+    barplot(ndeg_time_SZ,beside = TRUE, las=2, horiz=F, ylim = c(0,25000))
+}
+
+dds.sz.ttmodel_Releveled <- dds.sz.ttmodel
+relevel(dds.sz.ttmodel_Releveled$Tissue, "ZE")
+dds.sz.ttmodel_Releveled$Tissue <- relevel(dds.sz.ttmodel_Releveled$Tissue, "ZE")
+
+dds.sz.ttmodel_Releveled <- DESeq(dds.sz.ttmodel_Releveled)
+resultsNames(dds.sz.ttmodel_Releveled)
+
+
+###Should probably relevel this one to get time and ze
+ndeg_time_ze_SZ <- sapply(3:6,function(i){
+    vec <- rep(0,length(resultsNames(dds.sz.ttmodel_Releveled)))
+    vec[i] <- 1
+    if(i>3){
+        vec[i-1] <- -1
+    }
+    print(vec)
+    #res.gene <- results(dds_DE_ZE_Cache, contrast = vec)
+    #print(res.gene["MA_191819g0010.1",])
+    
+    #return(res.gene["MA_191819g0010.1",]$log2FoldChange)
+    sapply(extract_results(dds.sz.ttmodel_Releveled,vst.sz.ttmodel,vec,verbose = TRUE,
+                           export = TRUE,plot = FALSE, default_dir = here("analysis/DE/SZ_ZE_Time"), default_prefix = ndeg_time_ze_exnames_sz[i-2]),length)
+})
+#Barplot
+{
+    #Barplot Preprocessing
+    {
+        barnames <- resultsNames(dds.sz.ttmodel)[3:6]
+        barnames <- str_replace_all(barnames,"_","")
+        barnames <- str_replace(barnames,"Time"," ")
+        barnames <- str_replace(barnames,"vs"," vs ")
+        barnames <- str_replace(barnames,"vs B4","vs B")
+        barnames <- str_c(barnames[1:4],4:7)
+
+    }    
+    #Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
+    #differential expression based only on Time (reference is Time_B1)
+    colnames(ndeg_time_ze_SZ) <- barnames
+    rownames(ndeg_time_ze_SZ) <- c("all","up","dn")
+    
+    barplot(ndeg_time_ze_SZ,beside = TRUE, las=2, horiz=F, ylim = c(0,25000))
+}
+
+ndeg_time_ze_SZ_2 <- sapply(3:6,function(i){
+    vec <- rep(0,length(resultsNames(dds.sz.ttmodel)))
+    vec[i] <- 1
+    if(i>3){
+        vec[i-1] <- -1
+    }
+    vec[i+4] <- 1
+    print(vec)
+    #res.gene <- results(dds_DE_ZE_Cache, contrast = vec)
+    #print(res.gene["MA_191819g0010.1",])
+    
+    #return(res.gene["MA_191819g0010.1",]$log2FoldChange)
+    sapply(extract_results(dds.sz.ttmodel,vst.sz.ttmodel,vec,verbose = TRUE,
+                           export = FALSE,plot = FALSE, default_dir = here("analysis/DE/SZ_ZE_Time"), default_prefix = ndeg_time_ze_exnames_sz[i-2]),length)
+})
+#Barplot
+{
+    #Barplot Preprocessing
+    {
+        barnames <- resultsNames(dds.sz.ttmodel)[3:6]
+        barnames <- str_replace_all(barnames,"_","")
+        barnames <- str_replace(barnames,"Time"," ")
+        barnames <- str_replace(barnames,"vs"," vs ")
+        barnames <- str_replace(barnames,"vs B4","vs B")
+        barnames <- str_c(barnames[1:4],4:7)
+        
+    }    
+    #Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
+    #differential expression based only on Time (reference is Time_B1)
+    colnames(ndeg_time_ze_SZ_2) <- barnames
+    rownames(ndeg_time_ze_SZ_2) <- c("all","up","dn")
+    
+    barplot(ndeg_time_ze_SZ_2,beside = TRUE, las=2, horiz=F, ylim = c(0,25000))
+}
+
+
+
+
+
+
+ndeg_main_SZ
+ndeg_main_SZ[,3]
+ndeg_time_SZ
+ndeg_time_SZ[1,2]
+ndeg_time_ze_SZ
+ndeg_time_ze_SZ[1,2]
+ndeg_time_ze_SZ_2
+ndeg_time_ze_SZ_2[1,2]
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

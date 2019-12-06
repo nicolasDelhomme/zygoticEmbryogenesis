@@ -92,13 +92,13 @@ clusterQA(infomapTable, level = "Level1")
 
 
 topClusters[31]
-  
+
   
 source(here("UPSCb-common/src/R/gopher.R"))
 enr_clusters <- lapply(topClusters[1:31], function(x){
   print(length(x))
   if(length(x) > 1)
-    gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+    gopher(x, task = list('go', 'mapman','kegg'), background = NULL, url="pabies", alpha = 0.05)
   else
     NULL
 })
@@ -106,6 +106,44 @@ enr_clusters <- lapply(topClusters[1:31], function(x){
 enr_clusters
 length(enr_clusters)
 
-
+#enriched the clusters that we have
 enr2tsv(enr_clusters, file=paste0(clusterFolder,"enrichedClusters"))
+
+
+#extract first degree neighbours
+source(here("Rtoolbox/src/getFDN.R"))
+#edgelist, then genes
+geneList <- read_csv(here("analysis/DE/FMG_Time_B2_vs_B(-1)genes.csv"))
+geneList <- geneList$X1
+geneList <- str_replace_all(geneList, "[.]1","")
+
+edgeList <- read.table(here("data/seidr/network/cluster/edgeList.txt"),header=F,sep="\t")
+edgeList <- edgeList[,1:2]
+
+# data setup
+# edgelist (2 columns, source and linked gene - 3rd column with value is removed)
+# genes 
+
+
+#subscript out of bounds error - why is that? Trying to access something that is out of the range of the matrix
+#the error was that it was in a matrix
+test <- getFDN(edgeList,geneList)
+test
+
+#cluster number 3 appears to be the yeastbody-like structure in cytoscape
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

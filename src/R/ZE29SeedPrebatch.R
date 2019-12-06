@@ -105,6 +105,7 @@ colnames(countsZE)
 samplesZE$NGI.ID
 samplesZE$NGI.ID == colnames(countsZE)
 
+
 samplesZE_S_to_FMG <- subset(samplesZE,samplesZE$Tissue == "S")
 samplesZE_S_to_ZE <- samplesZE_S_to_FMG
 countsZE_S_to_FMG <- countsZE
@@ -133,7 +134,7 @@ colnames(countsZE_Final)
 countsZE_Final
 #append split samples
 samplesZE_Final <- bind_rows(samplesZE, samplesZE_S_to_FMG, samplesZE_S_to_ZE)
-samplesZE_Final
+
 #################end of ZE
 
 
