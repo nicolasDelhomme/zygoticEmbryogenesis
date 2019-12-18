@@ -158,6 +158,8 @@ resultsNames(dds_DE_ZE_Cache_Releveled)
 
 #' ## Results
 
+##THIS IS ALL THE PREVIOUS TESTING STUFF
+{
 # Time effect with the reference level of FMG
 ndeg_Time_ZF <- sapply(3:11,function(i){
     vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
@@ -1487,6 +1489,8 @@ Reduce(rbind,l2fc_gtest_3)
 #THIS ONE IS RIGHT - B7 is at 2.80 L2FC!!
 #SIMPLY ADD TISSUE VS TISSUE AND THE INTERACTION TERM TO GET IT
 #For the next one, at B7 it should be 2.24
+}
+##THIS IS ALL THE PREVIOUS TESTING STUFF
 
 
 #export names
@@ -1716,460 +1720,22 @@ grid.draw(venn.diagram(list("FMG_B3_vs_B4"=DE_FMG_B3_B4,
                        
                        NULL,
                        fill=pal[1:4]))
+
 venn_ZF_list <- list("FMG_B3_vs_B4"=DE_FMG_B3_B4,
                      "FMG_B6_vs_B7"=DE_FMG_B7_B6,
                      "ZE_B3_vs_B4"=DE_ZE_B3_B4,
                      "ZE_B6_vs_B7"=DE_ZE_B7_B6)
 
 venn_ZF_list <- venn(venn_ZF_list, show.plot = FALSE)
-
+### EXTRACT THE GENES THAT ARE IN THESE VENN INTERSECTS
 
 
 
 
 ndeg_time[1,3]
 ndeg_time[1,6]
-
 ndeg_time_ze[1,3]
 ndeg_time_ze[1,6]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#B4vsB1 - B3-B1 = B4vsB3, with the addition of ZE interacting with B4 we get the Effect of Time in ZE
-test_vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-test_vec[5] <- 1 #B4
-test_vec[4] <- -1 #B3
-test_vec[14] <- 1 #ZE interacting with B4
-#USING TEST_VEC THIS IS ACCURATE TO MAIN + INTERACTION ALONE
-TISSUETEST <- extract_results(dds_DE_ZE_Cache,vst_DE_ZE_Cache,test_vec,verbose = TRUE,
-                              export = FALSE,plot = FALSE, default_prefix = ndeg3_export_names[i-2])
-
-#WITH TIME, WHAT IS THE DIFFERENCE BETWEEN GENOTYPES
-test_vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-test_vec[2] <- 1
-test_vec[14] <- 1
-TISSUETEST <- extract_results(dds_DE_ZE_Cache,vst_DE_ZE_Cache,test_vec,verbose = TRUE,
-                              export = FALSE,plot = FALSE, default_prefix = ndeg3_export_names[i-2])
-
-
-
-
-
-
-
-#testing a deletion of B1, B2 and B3 because maybe its messing up everything down the line as the tissues split
-
-
-dds_deleted_seedtissue <- dds_DE_ZE_Cache
-
-dds_deleted_seedtissue <- dds_deleted_seedtissue[,!(dds_deleted_seedtissue$Time == "B1")]
-dds_deleted_seedtissue <- dds_deleted_seedtissue[,!(dds_deleted_seedtissue$Time == "B2")]
-dds_deleted_seedtissue <- dds_deleted_seedtissue[,!(dds_deleted_seedtissue$Time == "B3")]
-dds_deleted_seedtissue$Time
-dds_deleted_seedtissue$Time <- droplevels(dds_deleted_seedtissue$Time)
-dds_deleted_seedtissue$Time
-
-dds_deleted_seedtissue <- DESeq(dds_deleted_seedtissue)
-vst_deleted_seedtissue <- vst_DE_ZE_Cache
-vst_deleted_seedtissue <- vst_deleted_seedtissue[,!(vst_deleted_seedtissue != dds_deleted_seedtissue$NGI.ID)]
-
-
-
-
-ndeg_Test <- sapply(9:14,function(i){
-    vec <- rep(0,length(resultsNames(dds_deleted_seedtissue)))
-    vec[i] <- 1
-    vec[2] <- 1
-    # vec[i-9] <- -1 IS REMOVING THE EFFECT OF FMG, THEREFORE WE SEE THE EXPRESSION OF ZE TISSUE AT THAT TIME
-    #WE AREN'T JUST REMOVING THE TIME EFFECT, WE ARE REMOVING THE TISSUE EFFECT RELATED WITH THAT TIME INFORMATION
-    vec[i-6] <- -1
-#    if(i>13){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        #        vec[i-1] <- -1
-        #        vec[i-10] <- -1
-#    }
-    print(vec)
-    print(resultsNames(dds_deleted_seedtissue))
-    sapply(extract_results(dds_deleted_seedtissue,vst_deleted_seedtissue,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg3_export_names[i-2]),length)
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ndeg3_export_names <- resultsNames(dds_DE_ZE_Cache)[2:10]
-ndeg3_export_names <- str_replace(ndeg3_export_names, "Time", "FMG_Time")
-ndeg3_export_names <- str_replace(ndeg3_export_names, "vs_B1", "vs_B(-1)")
-
-####Time vs B1 FMG Tissue
-###differential expression based on Time only
-ndeg3 <- sapply(3:11,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    vec[i]<-1
-    if(i>3){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
-    }
-    sapply(extract_results(dds_DE_ZE_Cache,vst,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg3_export_names[i-2]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache)[3:11]
-barnames <- str_replace_all(barnames,"_","")
-barnames <- str_replace(barnames,"Time"," ")
-barnames <- str_replace(barnames,"vs"," vs ")
-barnames <- str_replace(barnames,"vs B1","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-
-#Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg3) <- barnames
-rownames(ndeg3) <- c("all","up","dn")
-barplot(ndeg3,beside = TRUE, las=2, horiz=F)
-
-#same as above, but showing in groups of "all" "up" and "down" regulated.
-#ndeg3trans <- t(ndeg3)
-#rownames(ndeg3trans) <- barnames
-#colnames(ndeg3trans) <- c("all","up","dn")
-#barplot(ndeg3trans,beside = TRUE, las=2, horiz=F)
-
-
-#' ### Venn Diagram
-#grid.newpage()
-#grid.draw(venn.diagram(c("B6 vs B1"=B6vsB1[1],
-#                            "B7 vs B1"=B7vsB1[1]),
-#                       NULL,
-#                       fill=pal[1:2]))
-
-
-
-
-ndeg4_export_names <- resultsNames(dds_DE_ZE_Cache)[12:20]
-ndeg4_export_names <- str_replace(ndeg4_export_names, "Time", "ZE_Time")
-ndeg4_export_names <- str_replace(ndeg4_export_names, "vs_B1", "vs_B(-1)")
-
-resultsNames(dds_DE_ZE_Cache)
-####Time vs ZETissue (not adjusted for FMG vs ZE)
-ndeg4 <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    if(i<14){
-        vec[i-9]<-1
-        if(i>12){
-            vec[i-10]<- -1
-        }
-    }else{
-        vec[i]<-1
-    }
-#    vec[i]<-1
-    if(i>13){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
-    }
-    print(vec)
-    sapply(extract_results(dds_DE_ZE_Cache,vst,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg4_export_names[i-11]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache)[12:20]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,".Tissue"," ")
-barnames <- str_replace(barnames,"ZE","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-#Differential expression ZE vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg4) <- barnames
-rownames(ndeg4) <- c("all","up","dn")
-barplot(ndeg4,beside = TRUE, las=2, horiz=F)
-
-#same as above, but showing in groups of "all" "up" and "down" regulated.
-#ndeg4trans <- t(ndeg4)
-#rownames(ndeg4trans) <- barnames
-#colnames(ndeg4trans) <- c("all","up","dn")
-#barplot(ndeg4trans,beside = TRUE, las=2, horiz=F)
-###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
-
-
-
-resultsNames(dds_DE_ZE_Cache)
-results(dds_DE_ZE_Cache, name="TimeB2.TissueZE")
-results(dds_DE_ZE_Cache, contrast=list(c("Time_B2_vs_B1","TimeB2.TissueZE")))
-attr(dds_DE_ZE_Cache, "modelMatrixType")
-
-####This should combine the main effect (Tissue vs Tissue), with the interaction effect (ZETissue.Time)
-# The main effect is Tissue_ZE_vs_FMG, plus the interaction effects in the ZE tissue
-# Would I still do -1 for the previous interaction term?
-ndeg4devel <- sapply(12:20,function(i){
-    
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    vec[2] <- 1 #Time in 
-    vec[i] <- 1
-    if(i>12){
-        vec[i-1] <- -1
-    }
-    print(vec)
-    
-    
-    
-    sapply(extract_results(dds_DE_ZE_Cache,vst_DE_ZE_Cache,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg4_export_names[i-11]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache)[12:20]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,".Tissue"," ")
-barnames <- str_replace(barnames,"ZE","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-#Differential expression ZE vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg4devel) <- barnames
-rownames(ndeg4devel) <- c("all","up","dn")
-barplot(ndeg4devel,beside = TRUE, las=2, horiz=F)
-
-#To determine the Tissue Effect, without looking at Time
-# Contrast Tissue, ZE and FMG
-ndeg4devel_2 <- sapply(1,function(i){
-    
-    print(i)
-    vec <- c("Tissue","ZE","FMG")
-    print(vec)
-    
-    sapply(extract_results(dds_DE_ZE_Cache,vst_DE_ZE_Cache,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg4_export_names[i-11]),length)
-})
-
-#Condition effect in Tissue = Condition + Interaction term (eg TimeB2 vs TimeB1 + TissueZE.TimeB2)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-resultsNames(dds_DE_ZE_Cache_Releveled)
-{
-    ndeg_relevel_ZE_vs_FMG_devel <- sapply(12:20,function(i){
-        vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache_Releveled)))
-        vec[i]<-1
-        #vec[i-9]<-1
-        if(i>12){
-            #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-            
-            vec[i-10] <- -1
-        #    vec[i-1] <- -1
-        }
-        sapply(extract_results(dds_DE_ZE_Cache_Releveled,vst,vec,verbose = TRUE,
-                               export = FALSE,plot = FALSE, default_prefix = ndeg7_export_names[i-11]),length)
-    })
-    
-    barnames <- resultsNames(dds_DE_ZE_Cache_Releveled)[12:20]
-    barnames <- str_replace(barnames,"Time","")
-    barnames <- str_replace(barnames,".Tissue"," ")
-    barnames <- str_replace(barnames,"FMG","vs B")
-    barnames <- str_c(barnames[1:9],1:9)
-    
-    #Differential expression ZE vs FMG (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...) - looking at the tissue effect itself
-    #the tissue differences between FMG and ZE
-    #differential expression based only on Time (reference is Time_B1)
-    colnames(ndeg_relevel_ZE_vs_FMG_devel) <- barnames
-    rownames(ndeg_relevel_ZE_vs_FMG_devel) <- c("all","up","dn")
-    barplot(ndeg_relevel_ZE_vs_FMG_devel,beside = TRUE, las=2, horiz=F)
-}
-
-ndeg3-ndeg4
-ndeg3
-ndeg4
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-resultsNames(dds_DE_ZE_Cache)
-####Time vs ZETIssue (maybe adjusted for FMG vs ZE?)
-ndeg5 <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    vec[i]<-1
-    vec[i-9]<- -1
-    if(i>12){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1
-#        vec[i-10] <- -1        
-    }
-    print(vec)
-    sapply(extract_results(dds_DE_ZE_Cache,vst_DE_ZE_Cache,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE),length)
-})
-
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg5) <- resultsNames(dds_DE_ZE_Cache)[12:20]
-rownames(ndeg5) <- c("all","up","dn")
-barplot(ndeg5,beside = TRUE, las=2, horiz=F)
-
-
-##0.5 for ZEvsFMG Tissue
-ndeg6 <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    vec[i]<-1
-    vec[11]<-0.5
-    if(i>12){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
-    }
-    sapply(extract_results(dds_DE_ZE_Cache,vst_DE_ZE_Cache,vec,verbose = FALSE,
-                           export = FALSE,plot = FALSE),length)
-})
-
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg6) <- resultsNames(dds_DE_ZE_Cache)[12:20]
-rownames(ndeg6) <- c("all","up","dn")
-barplot(ndeg6,beside = TRUE, las=2, horiz=F)
-
-#same as above, but showing in groups of "all" "up" and "down" regulated.
-ndeg6trans <- t(ndeg6)
-rownames(ndeg6trans) <- resultsNames(dds_DE_ZE_Cache)[12:20]
-colnames(ndeg6trans) <- c("all","up","dn")
-barplot(ndeg6trans,beside = TRUE, las=2, horiz=F)
-###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
-
-
-
-
-
-ndeg7_export_names <- resultsNames(dds_DE_ZE_Cache)[12:20]
-ndeg7_export_names <- str_replace(ndeg7_export_names, "Time", "ZE_vs_FMG")
-ndeg7_export_names <- str_replace(ndeg7_export_names, "vs_B1", "vs_B(-1)")
-
-###comparing ZE and FMG time points, with -1 on the previous time point of FMG
-ndeg7 <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    vec[i]<-1
-    vec[i-9]<-1
-    if(i>12){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-
-        vec[i-10] <- -1
-    }
-    sapply(extract_results(dds_DE_ZE_Cache,vst,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg7_export_names[i-11]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache)[12:20]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,".Tissue"," ")
-barnames <- str_replace(barnames,"ZE","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-#Differential expression ZE vs FMG (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...) - looking at the tissue effect itself
-#the tissue differences between FMG and ZE
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg7) <- barnames
-rownames(ndeg7) <- c("all","up","dn")
-barplot(ndeg7,beside = TRUE, las=2, horiz=F)
-
-#same as above, but showing in groups of "all" "up" and "down" regulated.
-#ndeg7trans <- t(ndeg7)
-#rownames(ndeg7trans) <- barnames
-#colnames(ndeg7trans) <- c("all","up","dn")
-#barplot(ndeg7trans,beside = TRUE, las=2, horiz=F)
-###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
-
-
-
-
-
-
-
-##1 for ZE and FMG Time points, -1 to previous FMG and ZE time point
-ndeg8 <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache)))
-    vec[i]<-1
-    vec[i-9]<-1
-    if(i>12){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-10] <- -1     
-        vec[i-1] <- -1
-    }
-    sapply(extract_results(dds_DE_ZE_Cache,vst,vec,verbose = FALSE,
-                           export = FALSE,plot = FALSE),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache)[12:20]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,".Tissue"," ")
-barnames <- str_replace(barnames,"ZE","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg8) <- barnames
-rownames(ndeg8) <- c("all","up","dn")
-barplot(ndeg8,beside = TRUE, las=2, horiz=F)
-
-
-
-
-
-
-
-#same as above, but showing in groups of "all" "up" and "down" regulated.
-ndeg8trans <- t(ndeg8)
-rownames(ndeg8trans) <- barnames
-colnames(ndeg8trans) <- c("all","up","dn")
-barplot(ndeg8trans,beside = TRUE, las=2, horiz=F)
-###appears to only have DE between B4 to B7 in ZE Tissue vs B1FMG
 
 
 
@@ -2184,11 +1750,86 @@ barplot(ndeg8trans,beside = TRUE, las=2, horiz=F)
 TT_mat <- str_c(dds_DE_ZE_Cache$Tissue,dds_DE_ZE_Cache$Time)
 colnames(vst)
 
-
 source(here("UPSCb-common/src/R/expressionSpecificityUtility.R"))
-TT_exp.specif <- expressionSpecificity(exp.mat = vst_DE_ZE_Cache, tissue = TT_mat, mode = c("local"), output = c("complete"))
+TT_exp.specif <- expressionSpecificity(exp.mat = vst_DE_ZE_Cache, tissues = TT_mat, mode = "local", output = "complete")
     #exp.mat is vst_DE_ZE_Cache
 #tissue will be combination of time and tissue
+
+TT_mat_levels <- str_sort(TT_mat, numeric = TRUE)
+TT_mat_levels <- unique(TT_mat_levels)
+
+file.path(here("analysis/tissuespecificity/ZF",paste0("tissueSpecificity_ZF_",a,"_genes.csv")))
+TT_exp.specif_peaks <- sapply(1:length(TT_mat_levels),function(i){
+    if(i <= 3){
+        a <- str_c(TT_mat_levels[i],",",TT_mat_levels[i+10])
+    }else{
+        a <- TT_mat_levels[i]
+    }
+    print(a)
+    
+    peakcol <- length(colnames(TT_exp.specif[,]))
+    
+    b <- rownames(TT_exp.specif[TT_exp.specif[,peakcol] == a,])
+    if(length(b) > 0){
+        write.csv(b,file=file.path(here("analysis/tissuespecificity/ZF",paste0("tissueSpecificity_ZF_",a,"_genes.csv"))))
+    }
+    return(b)
+})
+
+names(TT_exp.specif_peaks) <- TT_mat_levels
+names(TT_exp.specif_peaks)
+
+
+source(here("UPSCb-common/src/R/gopher.R"))
+enr_TT_exp.specif_peaks_ZF <- lapply(TT_exp.specif_peaks[1:length(TT_exp.specif_peaks)], function(x){
+    print(length(x))
+    if(length(x) > 1){
+        x <- str_replace(x,"[.]1","")
+        print(x)
+        gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+    }else{
+        NULL
+    }
+})
+###SAVE PEAK ZF ENR GENES
+enr2tsv(enr_TT_exp.specif_peaks_ZF, file=paste0(here("/analysis/tissuespecificity/ZF/"),"enrichedGenes"))
+
+
+#PLOTTING TREEMAPS OF SZ Tissue Specificity
+for(i in 1:length(enr_TT_exp.specif_peaks_ZF)){
+    
+    x <- enr_TT_exp.specif_peaks_ZF
+    a <- length(x[[i]])
+    dir <- "analysis/tissuespecificity/ZF/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+        
+    }
+}
+
+
+
 
 str_subset(colnames(TT_exp.specif), "n", negate = TRUE)
 colnames(TT_exp.specif)
@@ -2249,124 +1890,63 @@ heatmap.2(TT_exp.specif.PC3,
 
 
 
-
-
-
-
-
-#NDEG Releveled FMG vs Time
+#' Extraction of Genes (adapted from Elena's script)
+dds_DE_ZE_Cache$Time
 {
-ndeg_relevel_FMG_Time <- sapply(2:10,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache_Releveled)))
-    vec[i]<-1
-    if(i>2){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
-    }
-    sapply(extract_results(dds_DE_ZE_Cache_Releveled,vst,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg3_export_names[i-1]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache_Releveled)[2:10]
-barnames <- str_replace_all(barnames,"_","")
-barnames <- str_replace(barnames,"Time"," ")
-barnames <- str_replace(barnames,"vs"," vs ")
-barnames <- str_replace(barnames,"vs B1","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-
-#Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg_relevel_FMG_Time) <- barnames
-rownames(ndeg_relevel_FMG_Time) <- c("all","up","dn")
-barplot(ndeg_relevel_FMG_Time,beside = TRUE, las=2, horiz=F)
-}
-
-
-#NDEG Releveled ZE vs Time
-{
-ndeg_relevel_ZE_Time <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache_Releveled)))
-    vec[i]<-1
-    if(i>12){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
-    }
-    sapply(extract_results(dds_DE_ZE_Cache_Releveled,vst,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg4_export_names[i-11]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache_Releveled)[12:20]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,".Tissue"," ")
-barnames <- str_replace(barnames,"ZE","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-#Differential expression ZE vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg_relevel_ZE_Time) <- barnames
-rownames(ndeg_relevel_ZE_Time) <- c("all","up","dn")
-barplot(ndeg_relevel_ZE_Time,beside = TRUE, las=2, horiz=F)
-}
-
-#NDEG Releveled ZE vs FMG
-{
-ndeg_relevel_ZE_vs_FMG <- sapply(12:20,function(i){
-    vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache_Releveled)))
-    vec[i]<-1
-    vec[i-10]<-1
-    if(i>12){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
+    #' Loop which produces a variable for each time comparison, between B4 to B8, whcih contains the 'results' function result from DESeq2
+    for(i in 1:9){
+        vec1<-i+1
+        vec1 <- str_c("B",vec1)
+        vec2<-i
+        vec2<- str_c("B",vec2)
         
-        vec[i-11] <- -1
+        assign(paste("res_", str_c(vec1,"_",vec2), sep=""),
+               as.data.frame(results(
+                   dds_DE_ZE_Cache, contrast = c("Time", vec1, vec2),
+                   filter = rowMedians(counts(dds_DE_ZE_Cache)),
+                   parallel = TRUE)))
     }
-    sapply(extract_results(dds_DE_ZE_Cache_Releveled,vst,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_prefix = ndeg7_export_names[i-11]),length)
-})
-
-barnames <- resultsNames(dds_DE_ZE_Cache_Releveled)[12:20]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,".Tissue"," ")
-barnames <- str_replace(barnames,"FMG","vs B")
-barnames <- str_c(barnames[1:9],1:9)
-
-#Differential expression ZE vs FMG (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...) - looking at the tissue effect itself
-#the tissue differences between FMG and ZE
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg_relevel_ZE_vs_FMG) <- barnames
-rownames(ndeg_relevel_ZE_vs_FMG) <- c("all","up","dn")
-barplot(ndeg_relevel_ZE_vs_FMG,beside = TRUE, las=2, horiz=F)
-}
-
-#NDEG Releveled ZE vs FMG v2 #REAL TISSUE EFFECT MAYBE?
-{
-    ndeg_relevel_ZE_vs_FMG.v2 <- sapply(12:20,function(i){
-        vec <- rep(0,length(resultsNames(dds_DE_ZE_Cache_Releveled)))
-        vec[i]<-1
-        vec[i-10]<-1
-        if(i>12){
-            #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-            
-            vec[i-11] <- -1
-            vec[i-1] <- -1
-        }
-        sapply(extract_results(dds_DE_ZE_Cache_Releveled,vst,vec,verbose = TRUE,
-                               export = FALSE,plot = FALSE, default_prefix = ndeg7_export_names[i-11]),length)
-    })
     
-    barnames <- resultsNames(dds_DE_ZE_Cache_Releveled)[12:20]
-    barnames <- str_replace(barnames,"Time","")
-    barnames <- str_replace(barnames,".Tissue"," ")
-    barnames <- str_replace(barnames,"FMG","vs B")
-    barnames <- str_c(barnames[1:9],1:9)
+    #' Extracts log2FoldChange and places them into a new dataframe
+    zf_DESeq <- data.frame(Genes = rownames(res_B2_B1), 
+                           L2FC_B2_vs_B1 = res_B2_B1$log2FoldChange,
+                           L2FC_B3_vs_B2 = res_B3_B2$log2FoldChange,
+                           L2FC_B4_vs_B3 = res_B4_B3$log2FoldChange,
+                           L2FC_B5_vs_B4 = res_B5_B4$log2FoldChange, 
+                           L2FC_B6_vs_B5 = res_B6_B5$log2FoldChange,
+                           L2FC_B7_vs_B6 = res_B7_B6$log2FoldChange,
+                           L2FC_B8_vs_B7 = res_B8_B7$log2FoldChange,
+                           L2FC_B9_vs_B8 = res_B9_B8$log2FoldChange,
+                           L2FC_B10_vs_B9 = res_B10_B9$log2FoldChange)
+    zf_DESeq[is.na(zf_DESeq)] <- 0
+    zf_DESeq$Genes <- sub("\\.1$", "", zf_DESeq$Genes)
+    write_tsv(zf_DESeq, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/zf_DESeq_cyto.tsv")
     
-    #Differential expression ZE vs FMG (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...) - looking at the tissue effect itself
-    #the tissue differences between FMG and ZE
-    #differential expression based only on Time (reference is Time_B1)
-    colnames(ndeg_relevel_ZE_vs_FMG.v2) <- barnames
-    rownames(ndeg_relevel_ZE_vs_FMG.v2) <- c("all","up","dn")
-    barplot(ndeg_relevel_ZE_vs_FMG.v2,beside = TRUE, las=2, horiz=F)
+    #' Extracts padj and places them into a new dataframe
+    zf_padj_df <- res_B5_B4
+    zf_padj <- data.frame(Genes = rownames(res_B2_B1), 
+                          padj_B2_vs_B1 = res_B2_B1$padj,
+                          padj_B3_vs_B2 = res_B3_B2$padj,
+                          padj_B4_vs_B3 = res_B4_B3$padj,
+                          padj_B5_vs_B4 = res_B5_B4$padj,
+                          padj_B6_vs_B5 = res_B6_B5$padj,
+                          padj_B7_vs_B6 = res_B7_B6$padj,
+                          padj_B8_vs_B7 = res_B8_B7$padj,
+                          padj_B9_vs_B8 = res_B9_B8$padj,
+                          padj_B10_vs_B9 = res_B10_B9$padj)
+    zf_padj[is.na(zf_padj)] <- 1
+    zf_padj$Genes <- sub("\\.1$", "", zf_padj$Genes)
+    write.csv(zf_padj, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/zf_padj_cyto.csv")
 }
+#' Use the above exported files in infomaptools
+
+
+
+
+
+
+
+
 
 
 
@@ -2379,6 +1959,308 @@ grid.draw(venn.diagram(list("B2-B3"=ZEB2B3$all,
                             "B7-B10"=ZEB7B8B910$all),
                        NULL,
                        fill=pal[1:3]))
+
+
+
+
+
+
+
+
+#treemaps
+source(here("Rtoolbox/src/plotEnrichedTreemap.R"))
+
+
+enr_TT_exp.specif_peaks_ZF
+
+#enrichment of DE genes that are in FMG vs Time
+{
+FL_FMG_Time <- list.files(here("analysis/DE/ZF_FMG_Time/"), 
+                          recursive = TRUE, 
+                          pattern = "FMG_Time",
+                          full.names = TRUE)
+
+FL_FMG_Time <- str_subset(FL_FMG_Time, "genes.csv")
+#FL_FMG_Time <- str_subset(FL_FMG_Time, "up", negate = TRUE)
+#FL_FMG_Time <- str_subset(FL_FMG_Time, "down", negate = TRUE)
+FL_FMG_Time <- str_sort(FL_FMG_Time, numeric = TRUE)
+
+FMG_GL <- sapply(1:length(FL_FMG_Time), function(i){
+    
+    if(length(read.csv(FL_FMG_Time[i])$x) == 0){
+        a <- read.csv(FL_FMG_Time[i])$X
+    }else{
+        a <- read.csv(FL_FMG_Time[i])$x
+    }
+    
+    a <- as.character(a)
+    print(length(a))
+    a <- str_replace(a,"[.]1","")
+    return(a)
+})
+FMG_GL_Names <- sapply(1:length(FL_FMG_Time), function(i){
+    a <- str_split(FL_FMG_Time, "FMG_")[[i]][3]
+    a <- str_replace(a, ".csv","")
+    return(a)
+})
+#FMG_GL_Names <- str_sort(FMG_GL_Names, numeric = TRUE)
+names(FMG_GL) <- FMG_GL_Names
+
+enr_de_fmg_time <- lapply(FMG_GL[1:length(FMG_GL)], function(x){
+    print(length(x))
+    if(length(x) > 1)
+        gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+    else
+        NULL
+})
+enr2tsv(enr_de_fmg_time, file=paste0(here("/analysis/DE/ZF_FMG_Time/"),"enrichedGenes"))
+}
+
+
+
+#enrichment of DE genes that are in ZE vs Time
+{
+    FL_ZE_Time <- list.files(here("analysis/DE/ZF_ZE_Time/"), 
+                              recursive = TRUE, 
+                              pattern = "ZE_Time",
+                              full.names = TRUE)
+    
+    FL_ZE_Time <- str_subset(FL_ZE_Time, "genes.csv")
+#    FL_ZE_Time <- str_subset(FL_ZE_Time, "up", negate = TRUE)
+#    FL_ZE_Time <- str_subset(FL_ZE_Time, "down", negate = TRUE)
+    FL_ZE_Time <- str_sort(FL_ZE_Time, numeric = TRUE)
+    
+    ZE_GL <- sapply(1:length(FL_ZE_Time), function(i){
+
+        if(length(read.csv(FL_ZE_Time[i])$x) == 0){
+            a <- read.csv(FL_ZE_Time[i])$X
+        }else{
+            a <- read.csv(FL_ZE_Time[i])$x
+        }
+        
+        a <- as.character(a)
+        a <- str_replace(a,"[.]1","")
+        return(a)
+    })
+    ZE_GL_Names <- sapply(1:length(FL_ZE_Time), function(i){
+        a <- str_split(FL_ZE_Time, "ZE_")[[i]][3]
+        a <- str_replace(a, ".csv","")
+        return(a)
+    })
+    #ZE_GL_Names <- str_sort(ZE_GL_Names, numeric = TRUE)
+    names(ZE_GL) <- ZE_GL_Names
+    
+    enr_de_ze_time <- lapply(ZE_GL[1:length(ZE_GL)], function(x){
+        print(length(x))
+        if(length(x) > 1)
+            gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+        else
+            NULL
+    })
+    enr2tsv(enr_de_ze_time, file=paste0(here("/analysis/DE/ZF_ZE_Time/"),"enrichedGenes"))
+}
+
+
+#enrichment of DE genes that are in ZE vs FMG
+{
+    FL_ZE_FMG <- list.files(here("analysis/DE/ZF_TissueEffect/"), 
+                             recursive = TRUE, 
+                             pattern = "Tissue_ZE_vs_FMG",
+                             full.names = TRUE)
+    
+    FL_ZE_FMG <- str_subset(FL_ZE_FMG, "genes.csv")
+#    FL_ZE_FMG <- str_subset(FL_ZE_FMG, "up", negate = TRUE)
+#    FL_ZE_FMG <- str_subset(FL_ZE_FMG, "down", negate = TRUE)
+    FL_ZE_FMG <- str_sort(FL_ZE_FMG, numeric = TRUE)
+    
+    ZE_GL <- sapply(1:length(FL_ZE_FMG), function(i){
+        
+        if(length(read.csv(FL_ZE_FMG[i])$x) == 0){
+            a <- read.csv(FL_ZE_FMG[i])$X
+        }else{
+            a <- read.csv(FL_ZE_FMG[i])$x
+        }
+        
+        a <- as.character(a)
+        a <- str_replace(a,"[.]1","")
+        return(a)
+    })
+    ZE_GL_Names <- sapply(1:length(FL_ZE_FMG), function(i){
+        a <- str_split(FL_ZE_FMG, "Tissue_")[[i]][2]
+        a <- str_replace(a, ".csv","")
+        return(a)
+    })
+    #ZE_GL_Names <- str_sort(ZE_GL_Names, numeric = TRUE)
+    names(ZE_GL) <- ZE_GL_Names
+    
+    enr_de_ze_fmg <- lapply(ZE_GL[1:length(ZE_GL)], function(x){
+        print(length(x))
+        if(length(x) > 1)
+            gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+        else
+            NULL
+    })
+    enr2tsv(enr_de_ze_fmg, file=paste0(here("/analysis/DE/ZF_TissueEffect/"),"enrichedGenes"))
+}
+
+
+names(enr_de_ze_fmg)
+
+#PLOTTING TREEMAPS OF ZF_TissueEffect
+for(i in 1:length(enr_de_ze_fmg)){
+    
+    x <- enr_de_ze_fmg
+    a <- length(x[[i]])
+    dir <- "analysis/DE/ZF_TissueEffect/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+
+    }
+}
+
+#PLOTTING TREEMAPS OF ZF_FMG_Time
+for(i in 1:length(enr_de_fmg_time)){
+    
+    x <- enr_de_fmg_time
+    a <- length(x[[i]])
+    dir <- "analysis/DE/ZF_FMG_Time/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+           dev.off()
+            print("map")
+            
+        }
+        
+    }
+}
+
+
+#PLOTTING TREEMAPS OF ZF_FMG_Time
+for(i in 1:length(enr_de_ze_time)){
+    
+    x <- enr_de_ze_time
+    a <- length(x[[i]])
+    dir <- "analysis/DE/ZF_ZE_Time/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+            
+        }
+        
+    }
+}
+
+
+
+
+plotEnrichedTreemap(enr_de_ze_fmg[[10]], enrichment = "go", namespace = "none")
+
+plotname <- "testplot"
+
+
+
+
+png(file=here(str_c("analysis/DE/ZF_FMG_Time/Treemaps/",plotname, ".png")),
+    width=1000, height=700)
+plotEnrichedTreemap(enr_de_ze_fmg[[10]], enrichment = "go", namespace = "none")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+#plot treemaps of go and mapman for every sample
+
+FL_ENR_FMG_Time <- list.files(here("analysis/DE/ZF_FMG_Time/"), 
+                          recursive = TRUE, 
+                          pattern = "enriched",
+                          full.names = TRUE)
+
+FL_ENR_FMG_Time_go <- str_subset(FL_ENR_FMG_Time, "go.tsv")
+FL_ENR_FMG_Time_mapman <- str_subset(FL_ENR_FMG_Time, "mapman.tsv")
+
+FL_ENR_FMG_Time_go <- str_sort(FL_ENR_FMG_Time_go, numeric = TRUE)
+FL_ENR_FMG_Time_mapman <- str_sort(FL_ENR_FMG_Time_mapman, numeric = TRUE)
+
+ENR_FMG_Time_Plot <- sapply(1:length(FL_ENR_FMG_Time), function(i){
+    
+    a <- read_tsv(FL_ENR_FMG_Time[i])
+    return(a)
+})
+
+
+
+
+
+
+
+
+
 
 
 

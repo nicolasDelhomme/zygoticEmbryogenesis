@@ -206,7 +206,7 @@ ndeg_main_SZ <- sapply(6:10,function(i){
     
     #return(res.gene["MA_191819g0010.1",]$log2FoldChange)
     sapply(extract_results(dds.sz.ttmodel,vst.sz.ttmodel,vec,verbose = TRUE,
-                           export = TRUE,plot = FALSE, default_dir = here("analysis/DE/SZ_TissueEffect"), default_prefix = ndeg_tissue_sz[i-6]),length)
+                           export = TRUE,plot = FALSE, default_dir = here("analysis/DE/SZ_TissueEffect"), default_prefix = ndeg_tissue_sz[i-5]),length)
 })
 #Barplot
 {
@@ -278,6 +278,9 @@ dds.sz.ttmodel_Releveled <- DESeq(dds.sz.ttmodel_Releveled)
 resultsNames(dds.sz.ttmodel_Releveled)
 
 
+
+
+
 ###Should probably relevel this one to get time and ze
 ndeg_time_ze_SZ <- sapply(3:6,function(i){
     vec <- rep(0,length(resultsNames(dds.sz.ttmodel_Releveled)))
@@ -313,46 +316,6 @@ ndeg_time_ze_SZ <- sapply(3:6,function(i){
     barplot(ndeg_time_ze_SZ,beside = TRUE, las=2, horiz=F, ylim = c(0,25000))
 }
 
-ndeg_time_ze_SZ_2 <- sapply(3:6,function(i){
-    vec <- rep(0,length(resultsNames(dds.sz.ttmodel)))
-    vec[i] <- 1
-    if(i>3){
-        vec[i-1] <- -1
-    }
-    vec[i+4] <- 1
-    print(vec)
-    #res.gene <- results(dds_DE_ZE_Cache, contrast = vec)
-    #print(res.gene["MA_191819g0010.1",])
-    
-    #return(res.gene["MA_191819g0010.1",]$log2FoldChange)
-    sapply(extract_results(dds.sz.ttmodel,vst.sz.ttmodel,vec,verbose = TRUE,
-                           export = FALSE,plot = FALSE, default_dir = here("analysis/DE/SZ_ZE_Time"), default_prefix = ndeg_time_ze_exnames_sz[i-2]),length)
-})
-#Barplot
-{
-    #Barplot Preprocessing
-    {
-        barnames <- resultsNames(dds.sz.ttmodel)[3:6]
-        barnames <- str_replace_all(barnames,"_","")
-        barnames <- str_replace(barnames,"Time"," ")
-        barnames <- str_replace(barnames,"vs"," vs ")
-        barnames <- str_replace(barnames,"vs B4","vs B")
-        barnames <- str_c(barnames[1:4],4:7)
-        
-    }    
-    #Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-    #differential expression based only on Time (reference is Time_B1)
-    colnames(ndeg_time_ze_SZ_2) <- barnames
-    rownames(ndeg_time_ze_SZ_2) <- c("all","up","dn")
-    
-    barplot(ndeg_time_ze_SZ_2,beside = TRUE, las=2, horiz=F, ylim = c(0,25000))
-}
-
-
-
-
-
-
 ndeg_main_SZ
 ndeg_main_SZ[,3]
 ndeg_time_SZ
@@ -362,140 +325,101 @@ ndeg_time_ze_SZ[1,2]
 ndeg_time_ze_SZ_2
 ndeg_time_ze_SZ_2[1,2]
 
+###SE VS ZE TISSUE SPECIFICITY
+{
+    install_github("kassambara/factoextra")
+    library("factoextra")
+    TT_mat.sz <- str_c(dds.sz.ttmodel$Tissue,dds.sz.ttmodel$Time)
+    
+    
+    source(here("UPSCb-common/src/R/expressionSpecificityUtility.R"))
+    TT_exp.specif.sz <- expressionSpecificity(exp.mat = vst.sz.ttmodel, tissues = TT_mat.sz, mode = "local", output = "complete")
+    #exp.mat is vst_DE_ZE_Cache
+    #tissue will be combination of time and tissue
+    
+    TT_mat_levels.sz <- str_sort(TT_mat.sz, numeric = TRUE)
+    TT_mat_levels.sz <- unique(TT_mat_levels.sz)
+    
+    file.path(here("analysis/tissuespecificity/SZ",paste0("tissueSpecificity_SZ_",a,"_genes.csv")))
+    TT_exp.specif_peaks.sz <- sapply(1:length(TT_mat_levels.sz),function(i){
+    #    if(i <= 3){
+    #        a <- str_c(TT_mat_levels[i],",",TT_mat_levels[i+10])
+    #    }else{
+            a <- TT_mat_levels.sz[i]
+    #    }
+        print(a)
+        
+        peakcol <- length(colnames(TT_exp.specif.sz[,]))
+        
+        b <- rownames(TT_exp.specif.sz[TT_exp.specif.sz[,peakcol] == a,])
+        if(length(b) > 0){
+            write.csv(b,file=file.path(here("analysis/tissuespecificity/SZ",paste0("tissueSpecificity_SZ_",a,"_genes.csv"))))
+        }
+        return(b)
+    })
+    
+    names(TT_exp.specif_peaks.sz) <- TT_mat_levels.sz
+    names(TT_exp.specif_peaks.sz)
+    
+    
+    source(here("UPSCb-common/src/R/gopher.R"))
+    enr_TT_exp.specif_peaks_SZ <- lapply(TT_exp.specif_peaks.sz[1:length(TT_exp.specif_peaks.sz)], function(x){
+        print(length(x))
+        if(length(x) > 1){
+            x <- str_replace(x,"[.]1","")
+            print(x)
+            gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+        }else{
+            NULL
+        }
+    })
+    ###SAVE PEAK ZF ENR GENES
+    enr2tsv(enr_TT_exp.specif_peaks_SZ, file=paste0(here("/analysis/tissuespecificity/SZ/"),"enrichedGenes"))
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ndeg3.se_export_names <- resultsNames(dds.sz.ttmodel.de)[3:4]
-ndeg3.se_export_names <- str_replace(ndeg3.se_export_names, "Time", "SZ_SE_Time")
-ndeg3.se_export_names <- str_replace(ndeg3.se_export_names, "vs_B4", "vs_B(-1)")
-
-
-#modify code - need to make sure analysis is based on the previous time (eg, look at B4-B6 range, therefore B5vsB4, B6vsB5)
-#SE vs Time, is 3:4, -1 after 3
-#ZE vs Time is 7:8, -1 after 7
-#SE vs ZE is 7:8, 3:4, and -1 after 3
-
-
-####Time vs B1 SE Tissue
-###differential expression based on Time only
-ndeg3.se <- sapply(3:4,function(i){
-    vec <- rep(0,length(resultsNames(dds.sz.ttmodel.de)))
-    vec[i]<-1
-    if(i>3){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
+#PLOTTING TREEMAPS OF SZ Tissue Specificity
+for(i in 1:length(enr_TT_exp.specif_peaks_SZ)){
+    
+    x <- enr_TT_exp.specif_peaks_SZ
+    a <- length(x[[i]])
+    dir <- "analysis/tissuespecificity/SZ/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+        
     }
-    sapply(extract_results(dds.sz.ttmodel.de,vst.sz.ttmodel.featureselected,vec,verbose = TRUE,
-                           export = TRUE,plot = FALSE, default_prefix = ndeg3.se_export_names[i-2]),length)
-})
-
-barnames <- resultsNames(dds.sz.ttmodel.de)[3:4]
-barnames <- str_replace_all(barnames,"_","")
-barnames <- str_replace(barnames,"Time"," ")
-barnames <- str_replace(barnames,"vs"," vs ")
-barnames <- str_replace(barnames,"vs B4","vs B")
-barnames <- str_c(barnames[1:2],4:5)
-
-#Differential expression FMG vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg3.se) <- barnames
-rownames(ndeg3.se) <- c("all","up","dn")
-barplot(ndeg3.se,beside = TRUE, las=2, horiz=F)
-
-
-#' ### Venn Diagram
-grid.newpage()
-grid.draw(venn.diagram(c("B6 vs B1"=B6vsB1[1],
-                            "B7 vs B1"=B7vsB1[1]),
-                       NULL,
-                       fill=pal[1:2]))
+}
 
 
 
 
-ndeg4.se_export_names <- resultsNames(dds.sz.ttmodel.de)[3:4]
-ndeg4.se_export_names <- str_replace(ndeg4.se_export_names, "Time", "SZ_ZE_Time")
-ndeg4.se_export_names <- str_replace(ndeg4.se_export_names, "vs_B4", "vs_B(-1)")
 
 
-####Time vs ZETissue (not adjusted for FMG vs ZE)
-ndeg4.se <- sapply(7:8,function(i){
-    vec <- rep(0,length(resultsNames(dds.sz.ttmodel.de)))
-    vec[i]<-1
-    if(i>7){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-        vec[i-1] <- -1        
-    }
-    sapply(extract_results(dds.sz.ttmodel.de,vst.sz.ttmodel.featureselected,vec,verbose = TRUE,
-                           export = TRUE,plot = FALSE, default_prefix = ndeg4.se_export_names[i-6]),length)
-})
 
 
-barnames <- resultsNames(dds.sz.ttmodel.de)[7:8]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,"TissueZE.","")
-barnames <- str_c(barnames[1:2]," vs B")
-barnames <- str_c(barnames[1:2],4:5)
-
-#Differential expression ZE vs Time (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...)
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg4.se) <- barnames
-rownames(ndeg4.se) <- c("all","up","dn")
-barplot(ndeg4.se,beside = TRUE, las=2, horiz=F)
 
 
-ndeg7.se_export_names <- resultsNames(dds.sz.ttmodel.de)[3:4]
-ndeg7.se_export_names <- str_replace(ndeg7.se_export_names, "Time", "SZ_SE_vs_ZE")
-ndeg7.se_export_names <- str_replace(ndeg7.se_export_names, "vs_B4", "vs_B(-1)")
 
-###comparing ZE and FMG time points, with -1 on the previous time point of FMG
-ndeg7.se <- sapply(7:8,function(i){
-    vec <- rep(0,length(resultsNames(dds.sz.ttmodel.de)))
-    vec[i]<-1
-    vec[i-4]<-1
-    if(i>7){
-        #each unit is being compared to the previous unit, with the -1 (need to adjust names)
-
-        vec[i-5] <- -1
-    }
-    sapply(extract_results(dds.sz.ttmodel.de,vst.sz.ttmodel.featureselected,vec,verbose = TRUE,
-                           export = TRUE,plot = FALSE, default_prefix = ndeg7.se_export_names[i-6]),length)
-})
-
-barnames <- resultsNames(dds.sz.ttmodel.de)[5:6]
-barnames <- str_replace(barnames,"Time","")
-barnames <- str_replace(barnames,"TissueZE.","")
-barnames <- str_c(barnames[1:2]," vs B")
-barnames <- str_c(barnames[1:2],4:5)
-
-#Differential expression ZE vs FMG (redo the figure, B2vsB1, B3vsB2, B4vsB3, etc...) - looking at the tissue effect itself
-#the tissue differences between FMG and ZE
-#differential expression based only on Time (reference is Time_B1)
-colnames(ndeg7.se) <- barnames
-rownames(ndeg7.se) <- c("all","up","dn")
-barplot(ndeg7.se,beside = TRUE, las=2, horiz=F)
-
-combinedrows.se <- cbind(ndeg3.se,ndeg4.se,ndeg7.se)
-barplot(combinedrows.se,beside = TRUE, las=2, horiz=F)
-
-
-ndeg3.se
-ndeg4.se
-ndeg7.se
 
 
 
@@ -632,7 +556,7 @@ plotEnrichedTreemap(GL_SE.ZE_B6B5_enr, enrichment = "mapman", clusterColor = "#1
 
 
 #' Extraction of Genes (adapted from Elena's script)
-dds.sz.ttmodel.de$Time
+dds.sz.ttmodel$Time
 {
 #' Loop which produces a variable for each time comparison, between B4 to B8, whcih contains the 'results' function result from DESeq2
 for(i in 4:7){
@@ -643,8 +567,8 @@ for(i in 4:7){
     
     assign(paste("res_", str_c(vec1,"_",vec2), sep=""),
            as.data.frame(results(
-               dds.sz.ttmodel.de, contrast = c("Time", vec1, vec2),
-               filter = rowMedians(counts(dds.sz.ttmodel.de)),
+               dds.sz.ttmodel, contrast = c("Time", vec1, vec2),
+               filter = rowMedians(counts(dds.sz.ttmodel)),
                parallel = TRUE)))
 }
 
@@ -672,6 +596,343 @@ write.csv(sz_padj, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr
 #' Use the above exported files in infomaptools
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#treemaps
+source(here("Rtoolbox/src/plotEnrichedTreemap.R"))
+
+#enrichment of DE genes that are in SE vs Time
+{
+    FL_SE_Time <- list.files(here("analysis/DE/SZ_SE_Time/"), 
+                              recursive = TRUE, 
+                              pattern = "SE_Time",
+                              full.names = TRUE)
+    
+    FL_SE_Time <- str_subset(FL_SE_Time, "genes.csv")
+#    FL_SE_Time <- str_subset(FL_SE_Time, "up", negate = TRUE)
+#    FL_SE_Time <- str_subset(FL_SE_Time, "down", negate = TRUE)
+    FL_SE_Time <- str_sort(FL_SE_Time, numeric = TRUE)
+    
+    SE_GL <- sapply(1:length(FL_SE_Time), function(i){
+        
+        if(length(read.csv(FL_SE_Time[i])$x) == 0){
+            a <- read.csv(FL_SE_Time[i])$X
+        }else{
+            a <- read.csv(FL_SE_Time[i])$x
+        }
+        
+        a <- as.character(a)
+        a <- str_replace(a,"[.]1","")
+        return(a)
+    })
+    SE_GL_Names <- sapply(1:length(FL_SE_Time), function(i){
+        a <- str_split(FL_SE_Time, "SE_")[[i]][3]
+        a <- str_replace(a, ".csv","")
+        return(a)
+    })
+    #SE_GL_Names <- str_sort(SE_GL_Names, numeric = TRUE)
+    names(SE_GL) <- SE_GL_Names
+    
+    enr_de_se_time <- lapply(SE_GL[1:length(SE_GL)], function(x){
+        print(length(x))
+        if(length(x) > 1)
+            gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+        else
+            NULL
+    })
+    enr2tsv(enr_de_se_time, file=paste0(here("/analysis/DE/SZ_SE_Time/"),"enrichedGenes"))
+}
+
+#enrichment of DE genes that are in ZE vs Time
+{
+    FL_ZE_Time <- list.files(here("analysis/DE/SZ_ZE_Time/"), 
+                             recursive = TRUE, 
+                             pattern = "ZE_Time",
+                             full.names = TRUE)
+    
+    FL_ZE_Time <- str_subset(FL_ZE_Time, "genes.csv")
+#    FL_ZE_Time <- str_subset(FL_ZE_Time, "up", negate = TRUE)
+#    FL_ZE_Time <- str_subset(FL_ZE_Time, "down", negate = TRUE)
+    FL_ZE_Time <- str_sort(FL_ZE_Time, numeric = TRUE)
+    
+    ZE_GL <- sapply(1:length(FL_ZE_Time), function(i){
+        
+        if(length(read.csv(FL_ZE_Time[i])$x) == 0){
+            a <- read.csv(FL_ZE_Time[i])$X
+        }else{
+            a <- read.csv(FL_ZE_Time[i])$x
+        }
+        
+        a <- as.character(a)
+        a <- str_replace(a,"[.]1","")
+        return(a)
+    })
+    ZE_GL_Names <- sapply(1:length(FL_ZE_Time), function(i){
+        a <- str_split(FL_ZE_Time, "ZE_")[[i]][3]
+        a <- str_replace(a, ".csv","")
+        return(a)
+    })
+    #ZE_GL_Names <- str_sort(ZE_GL_Names, numeric = TRUE)
+    names(ZE_GL) <- ZE_GL_Names
+    
+    enr_de_ze_time <- lapply(ZE_GL[1:length(ZE_GL)], function(x){
+        print(length(x))
+        if(length(x) > 1)
+            gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+        else
+            NULL
+    })
+    enr2tsv(enr_de_ze_time, file=paste0(here("/analysis/DE/SZ_ZE_Time/"),"enrichedGenes"))
+}
+
+
+#enrichment of DE genes that are in ZE vs SE
+{
+    FL_ZE_SE <- list.files(here("analysis/DE/SZ_TissueEffect/"), 
+                            recursive = TRUE, 
+                            pattern = "Tissue_ZE_vs_SE",
+                            full.names = TRUE)
+    
+    FL_ZE_SE <- str_subset(FL_ZE_SE, "genes.csv")
+#    FL_ZE_SE <- str_subset(FL_ZE_SE, "up", negate = TRUE)
+#    FL_ZE_SE <- str_subset(FL_ZE_SE, "down", negate = TRUE)
+    FL_ZE_SE <- str_sort(FL_ZE_SE, numeric = TRUE)
+    
+    ZE_GL <- sapply(1:length(FL_ZE_SE), function(i){
+        
+        if(length(read.csv(FL_ZE_SE[i])$x) == 0){
+            a <- read.csv(FL_ZE_SE[i])$X
+        }else{
+            a <- read.csv(FL_ZE_SE[i])$x
+        }
+        
+        a <- as.character(a)
+        a <- str_replace(a,"[.]1","")
+        return(a)
+    })
+    ZE_GL_Names <- sapply(1:length(FL_ZE_SE), function(i){
+        a <- str_split(FL_ZE_SE, "Tissue_")[[i]][2]
+        a <- str_replace(a, ".csv","")
+        return(a)
+    })
+    #ZE_GL_Names <- str_sort(ZE_GL_Names, numeric = TRUE)
+    names(ZE_GL) <- ZE_GL_Names
+    
+    enr_de_ze_se <- lapply(ZE_GL[1:length(ZE_GL)], function(x){
+        print(length(x))
+        if(length(x) > 1)
+            gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+        else
+            NULL
+    })
+    enr2tsv(enr_de_ze_se, file=paste0(here("/analysis/DE/SZ_TissueEffect/"),"enrichedGenes"))
+}
+
+
+
+
+
+
+#VENN DIAGRAM
+{
+DE_SE_B6_B5 <- list.files(here("analysis/DE/SZ_SE_Time"), 
+                          recursive = TRUE, 
+                          pattern = "",
+                          full.names = TRUE)
+
+DE_SE_B6_B5 <- str_subset(DE_SE_B6_B5, "Time_B6_vs_B5genes.csv")
+DE_SE_B6_B5 <- sapply(1:length(DE_SE_B6_B5),function(i){
+    
+    GeneL <- read.csv(DE_SE_B6_B5[i])$X
+    GeneL <- as.character(GeneL)
+    GeneL <- str_replace(GeneL,"[.]1","")
+    
+    print(GeneL)
+    return(GeneL)
+    
+})
+
+
+DE_SE_B7_B6 <- list.files(here("analysis/DE/SZ_SE_Time"), 
+                           recursive = TRUE, 
+                           pattern = "",
+                           full.names = TRUE)
+
+DE_SE_B7_B6 <- str_subset(DE_SE_B7_B6, "Time_B7_vs_B6genes.csv")
+DE_SE_B7_B6 <- sapply(1:length(DE_SE_B7_B6),function(i){
+    
+    GeneL <- read.csv(DE_SE_B7_B6[i])$X
+    GeneL <- as.character(GeneL)
+    GeneL <- str_replace(GeneL,"[.]1","")
+    
+    print(GeneL)
+    return(GeneL)
+    
+})
+
+
+DE_ZE_B6_B5 <- list.files(here("analysis/DE/SZ_ZE_Time"), 
+                          recursive = TRUE, 
+                          pattern = "",
+                          full.names = TRUE)
+
+DE_ZE_B6_B5 <- str_subset(DE_ZE_B6_B5, "Time_B6_vs_B5genes.csv")
+DE_ZE_B6_B5 <- sapply(1:length(DE_ZE_B6_B5),function(i){
+    
+    GeneL <- read.csv(DE_ZE_B6_B5[i])$X
+    GeneL <- as.character(GeneL)
+    GeneL <- str_replace(GeneL,"[.]1","")
+    
+    print(GeneL)
+    return(GeneL)
+    
+})
+#ZE B6
+
+DE_ZE_B7_B6 <- list.files(here("analysis/DE/SZ_ZE_Time"), 
+                          recursive = TRUE, 
+                          pattern = "",
+                          full.names = TRUE)
+
+DE_ZE_B7_B6 <- str_subset(DE_ZE_B7_B6, "Time_B7_vs_B6genes.csv")
+DE_ZE_B7_B6 <- sapply(1:length(DE_ZE_B7_B6),function(i){
+    
+    GeneL <- read.csv(DE_ZE_B7_B6[i])$X
+    GeneL <- as.character(GeneL)
+    GeneL <- str_replace(GeneL,"[.]1","")
+    
+    print(GeneL)
+    return(GeneL)
+    
+})
+#ZE B7
+
+
+
+
+
+#' ### Venn Diagram
+grid.newpage()
+grid.draw(venn.diagram(list("SE_B6_vs_B5"=DE_SE_B6_B5,
+                            "SE_B6_vs_B7"=DE_SE_B7_B6,
+                            "ZE_B6_vs_B5"=DE_ZE_B6_B5,
+                            "ZE_B6_vs_B7"=DE_ZE_B7_B6),
+                       
+                       NULL,
+                       fill=pal[1:4]))
+}
+
+#PLOTTING TREEMAPS OF SZ_TissueEffect
+for(i in 1:length(enr_de_ze_se)){
+    
+    x <- enr_de_ze_se
+    a <- length(x[[i]])
+    dir <- "analysis/DE/SZ_TissueEffect/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+        
+    }
+}
+
+#PLOTTING TREEMAPS OF SZ_SE_Time
+for(i in 1:length(enr_de_se_time)){
+    
+    x <- enr_de_se_time
+    a <- length(x[[i]])
+    dir <- "analysis/DE/SZ_SE_Time/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+        
+    }
+}
+
+#PLOTTING TREEMAPS OF SZ_ZE_Time
+for(i in 1:length(enr_de_ze_time)){
+    
+    x <- enr_de_ze_time
+    a <- length(x[[i]])
+    dir <- "analysis/DE/SZ_ZE_Time/Treemaps/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+        
+    }
+}
 
 
 
