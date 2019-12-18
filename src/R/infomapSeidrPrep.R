@@ -88,6 +88,11 @@ save4Cytoscape(topClusters, file=paste0(clusterFolder,"InfomapClusters.tsv"))
 save4Cytoscape(topClusters, file=here("data/seidr/network/cluster", "InfomapClusters.tsv"))
 
 
+
+
+
+
+
 clusterQA(infomapTable, level = "Level1")
 
 
@@ -106,8 +111,49 @@ enr_clusters <- lapply(topClusters[1:31], function(x){
 enr_clusters
 length(enr_clusters)
 
+enr_clusters$Cluster3
+
 #enriched the clusters that we have
 enr2tsv(enr_clusters, file=paste0(clusterFolder,"enrichedClusters"))
+
+
+
+#PLOTTING TREEMAPS OF Top Clusters
+for(i in 1:length(enr_clusters)){
+  
+  x <- enr_clusters
+  a <- length(x[[i]])
+  dir <- "analysis/seidrclusters/"
+  
+  plotname <- names(x[i])
+  
+  if(a != 0){
+    print(plotname)
+    
+    #plot and save go treemap
+    if(is.null(nrow(x[[i]][[1]])) == FALSE){
+      png(file=here(str_c(dir, "go_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+      dev.off()
+      print("go")
+    }
+    
+    #plot and save mapman treemap
+    if(is.null(nrow(x[[i]][[2]])) == FALSE){
+      png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+      dev.off()
+      print("map")
+    }
+    
+  }
+}
+
+
+
+
 
 
 #extract first degree neighbours
@@ -131,10 +177,28 @@ test <- getFDN(edgeList,geneList)
 test
 
 #cluster number 3 appears to be the yeastbody-like structure in cytoscape
+#perform treemap of Cluster 3, which is interesting. Can do a treemap of all of them too, and archive them.
+source(here("Rtoolbox/src/plotEnrichedTreemap.R"))
+
+#Cluster 3, for GO and MAPMAN
+plotEnrichedTreemap(enr_clusters$Cluster3, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr_clusters$Cluster3, enrichment = "mapman", clusterColor = "#1B75BC")
+
+plotEnrichedTreemap(enr_clusters$Cluster30, enrichment = "go", namespace = "none")
+
+enr_DE_ZF_F_B34 <- gopher(c(DE_FMG_B3_B4), task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+enr_DE_ZF_Z_B34 <- gopher(c(DE_ZE_B3_B4), task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+
+plotEnrichedTreemap(enr_DE_ZF_F_B34, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr_DE_ZF_F_B34, enrichment = "mapman", namespace = "none")
+plotEnrichedTreemap(enr_DE_ZF_Z_B34, enrichment = "go", namespace = "none")
+plotEnrichedTreemap(enr_DE_ZF_Z_B34, enrichment = "mapman", namespace = "none")
 
 
-
-
+DE_FMG_B3_B4
+DE_FMG_B7_B6
+DE_ZE_B3_B4
+DE_ZE_B7_B6
 
 
 
