@@ -1,6 +1,6 @@
 #Differential Gene Expression Identification of Unique Genes under different conditions in Zygotic Embryogenesis Dataset
 
-FL_FMG_Time <- list.files(here("analysis/DE"), 
+FL_FMG_Time <- list.files(here("analysis/DE/ZF_FMG_Time/"), 
                           recursive = TRUE, 
                           pattern = "FMG_Time",
                           full.names = TRUE)
@@ -8,6 +8,75 @@ FL_FMG_Time <- list.files(here("analysis/DE"),
 FL_FMG_Time <- str_subset(FL_FMG_Time, "genes.csv")
 FL_FMG_Time <- str_subset(FL_FMG_Time, "up", negate = TRUE)
 FL_FMG_Time <- str_subset(FL_FMG_Time, "down", negate = TRUE)
+
+FMG_GL <- sapply(1:length(FL_FMG_Time), function(i){
+
+  a <- read.csv(FL_FMG_Time[i])$X
+  a <- as.character(a)
+  a <- str_replace(a,"[.]1","")
+  return(a)
+})
+
+length(unlist(FMG_GL))
+
+rownames(unlist(FMG_GL))
+unique(unlist(FMG_GL))
+
+FMG_GL_Names <- sapply(1:length(FL_FMG_Time), function(i){
+  a <- str_split(FL_FMG_Time, "FMG_")[[i]][3]
+  a <- str_replace(a, ".csv","")
+  return(a)
+})
+#FMG_GL_Names <- str_sort(FMG_GL_Names, numeric = TRUE)
+names(FMG_GL) <- FMG_GL_Names
+
+FMG_GL_Uniq <- sapply(1:length(FMG_GL),function(i){
+  if(i == 1){
+    print((i+1):length(FMG_GL))
+    a <- ((i+1):length(FMG_GL))
+    
+    print("BREAK")
+    reference <- unlist(FMG_GL[a])
+    
+    #get uniq
+    uniq <- FMG_GL[i]
+    uniq <- setdiff(uniq,reference)
+    names(uniq) <- names(FMG_GL)[i]
+    return(uniq)
+    
+    
+  }else if(i == 9){
+    print(1:(i-1))
+    a <- (1:(i-1))
+    
+    print("BREAK")
+    reference <- unlist(FMG_GL[a])
+    
+    #get uniq
+    uniq <- FMG_GL[i]
+    uniq <- setdiff(uniq,reference)
+    names(uniq) <- names(FMG_GL)[i]
+    return(uniq)
+    
+  }else{
+    print(1:(i-1))
+    a <- (1:(i-1))
+    
+    print((i+1):length(FMG_GL))
+    b <- ((i+1):length(FMG_GL))
+    
+    print("BREAK")  
+    reference <- unlist(c(FMG_GL[a],FMG_GL[b]))
+    
+    #get uniq
+    uniq <- FMG_GL[i]
+    uniq <- setdiff(uniq,reference)
+    names(uniq) <- names(FMG_GL)[i]
+    return(uniq)
+      }
+})
+
+
 
 #looking at Time in FMG Tissue
 #B2vsB1

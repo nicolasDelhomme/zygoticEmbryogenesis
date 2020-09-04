@@ -327,7 +327,7 @@ ndeg_time_ze_SZ_2[1,2]
 
 ###SE VS ZE TISSUE SPECIFICITY
 {
-    install_github("kassambara/factoextra")
+    #install_github("kassambara/factoextra")
     library("factoextra")
     TT_mat.sz <- str_c(dds.sz.ttmodel$Tissue,dds.sz.ttmodel$Time)
     
@@ -595,6 +595,164 @@ write.csv(sz_padj, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr
 }
 #' Use the above exported files in infomaptools
 
+#' Extraction of Genes (adapted from Elena's script)
+dds.sz.ttmodel$Time
+resultsNames(dds.sz.ttmodel)
+{
+    #' Loop which produces a variable for each time comparison, between B4 to B8, whcih contains the 'results' function result from DESeq2
+    for(i in 3:6){
+        
+        let <- i+1
+        fir <- str_c("B",(let+1))
+        sec<- str_c("B",let)
+        
+        vec <- rep(0,length(resultsNames(dds.sz.ttmodel)))
+        vec[i] <- 1
+        if(i>3){
+            vec[i-1] <- -1
+        }
+        nam_comb <- str_c(fir, "_", sec)
+        print(nam_comb)
+        
+        print(vec)
+        
+        assign(paste("res_", nam_comb, sep=""),
+               as.data.frame(results(
+                   dds.sz.ttmodel, contrast = vec,
+                   filter = rowMedians(counts(dds.sz.ttmodel)),
+                   parallel = TRUE)))
+    }
+    
+    #' Extracts log2FoldChange and places them into a new dataframe
+    sz_DESeq <- data.frame(Genes = rownames(res_B2_B1),
+                           L2FC_B5_vs_B4 = res_B5_B4$log2FoldChange, 
+                           L2FC_B6_vs_B5 = res_B6_B5$log2FoldChange,
+                           L2FC_B7_vs_B6 = res_B7_B6$log2FoldChange,
+                           L2FC_B8_vs_B7 = res_B8_B7$log2FoldChange)
+    sz_DESeq[is.na(sz_DESeq)] <- 0
+    sz_DESeq$Genes <- sub("\\.1$", "", sz_DESeq$Genes)
+    write_tsv(sz_DESeq, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/sz_DESeq_cyto.tsv")
+    
+    #' Extracts padj and places them into a new dataframe
+    sz_padj_df <- res_B5_B4
+    sz_padj <- data.frame(Genes = rownames(res_B2_B1),
+                          padj_B5_vs_B4 = res_B5_B4$padj,
+                          padj_B6_vs_B5 = res_B6_B5$padj,
+                          padj_B7_vs_B6 = res_B7_B6$padj,
+                          padj_B8_vs_B7 = res_B8_B7$padj)
+    sz_padj[is.na(sz_padj)] <- 1
+    sz_padj$Genes <- sub("\\.1$", "", sz_padj$Genes)
+    write.csv(sz_padj, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/sz_padj_cyto.csv")
+}
+#' Use the above exported files in infomaptools
+
+#Same as above, but for RELEVELED dds, which should give ZE vs Time
+resultsNames(dds.sz.ttmodel_Releveled)
+{
+    #' Loop which produces a variable for each time comparison, between B4 to B8, whcih contains the 'results' function result from DESeq2
+    for(i in 3:6){
+        
+        let <- i+1
+        fir <- str_c("B",(let+1))
+        sec<- str_c("B",let)
+        
+        vec <- rep(0,length(resultsNames(dds.sz.ttmodel_Releveled)))
+        vec[i] <- 1
+        if(i>3){
+            vec[i-1] <- -1
+        }
+        nam_comb <- str_c(fir, "_", sec)
+        print(nam_comb)
+        
+        print(vec)
+        
+        assign(paste("res_", nam_comb, sep=""),
+               as.data.frame(results(
+                   dds.sz.ttmodel_Releveled, contrast = vec,
+                   filter = rowMedians(counts(dds.sz.ttmodel_Releveled)),
+                   parallel = TRUE)))
+    }
+    
+    #' Extracts log2FoldChange and places them into a new dataframe
+    sz_DESeq_releveled <- data.frame(Genes = rownames(res_B5_B4),
+                                     L2FC_B5_vs_B4 = res_B5_B4$log2FoldChange, 
+                                     L2FC_B6_vs_B5 = res_B6_B5$log2FoldChange,
+                                     L2FC_B7_vs_B6 = res_B7_B6$log2FoldChange,
+                                     L2FC_B8_vs_B7 = res_B8_B7$log2FoldChange)
+    sz_DESeq_releveled[is.na(sz_DESeq_releveled)] <- 0
+    sz_DESeq_releveled$Genes <- sub("\\.1$", "", sz_DESeq_releveled$Genes)
+    write_tsv(sz_DESeq_releveled, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/sz_DESeq_releveled_cyto.tsv")
+    
+    #' Extracts padj and places them into a new dataframe
+    sz_padj_releveled_df <- res_B5_B4
+    sz_padj_releveled <- data.frame(Genes = rownames(res_B5_B4),
+                                    padj_B5_vs_B4 = res_B5_B4$padj,
+                                    padj_B6_vs_B5 = res_B6_B5$padj,
+                                    padj_B7_vs_B6 = res_B7_B6$padj,
+                                    padj_B8_vs_B7 = res_B8_B7$padj)
+    sz_padj_releveled[is.na(sz_padj_releveled)] <- 1
+    sz_padj_releveled$Genes <- sub("\\.1$", "", sz_padj_releveled$Genes)
+    write.csv(sz_padj_releveled, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/sz_padj_releveled_cyto.csv")
+}
+
+
+
+
+
+#' Extraction of Genes (adapted from Elena's script)
+dds.sz.ttmodel$Time
+resultsNames(dds.sz.ttmodel)
+{
+    #' Loop which produces a variable for each time comparison, between B4 to B8, whcih contains the 'results' function result from DESeq2
+    for(i in 6:10){
+        
+        let <- i-2
+        fir <- str_c("B", let)
+        
+        vec <- rep(0,length(resultsNames(dds.sz.ttmodel)))
+        if(i == 6){
+            vec[2] <- 1
+        }else{
+            vec[2] <- 1
+            vec[i] <- 1
+        }
+        nam_comb <- fir
+        print(nam_comb)
+        
+        print(vec)
+        
+        assign(paste("res_", nam_comb, sep=""),
+               as.data.frame(results(
+                   dds.sz.ttmodel, contrast = vec,
+                   filter = rowMedians(counts(dds.sz.ttmodel)),
+                   parallel = TRUE)))
+    }
+    
+    #' Extracts log2FoldChange and places them into a new dataframe
+    sz_DESeq_te <- data.frame(Genes = rownames(res_B4), 
+                              L2FC_B4 = res_B4$log2FoldChange, 
+                              L2FC_B5 = res_B5$log2FoldChange,
+                              L2FC_B6 = res_B6$log2FoldChange,
+                              L2FC_B7 = res_B7$log2FoldChange,
+                              L2FC_B8 = res_B8$log2FoldChange)
+    sz_DESeq_te[is.na(sz_DESeq_te)] <- 0
+    sz_DESeq_te$Genes <- sub("\\.1$", "", sz_DESeq_te$Genes)
+    write_tsv(sz_DESeq_te, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/sz_DESeq_te_cyto.tsv")
+    
+    #' Extracts padj and places them into a new dataframe
+    sz_padj_te_df <- res_B5_B4
+    sz_padj_te <- data.frame(Genes = rownames(res_B4),
+                             padj_B4 = res_B4$padj,
+                             padj_B5 = res_B5$padj,
+                             padj_B6 = res_B6$padj,
+                             padj_B7 = res_B7$padj,
+                             padj_B8 = res_B8$padj)
+    sz_padj_te[is.na(sz_padj_te)] <- 1
+    sz_padj_te$Genes <- sub("\\.1$", "", sz_padj_te$Genes)
+    write.csv(sz_padj_te, "/mnt/picea/home/mstewart/Git/zygoticEmbryogenesis/data/seidr/infomap/sz_padj_te_cyto.csv")
+}
+#' Use the above exported files in infomaptools
+
 
 
 
@@ -825,14 +983,94 @@ DE_ZE_B7_B6 <- sapply(1:length(DE_ZE_B7_B6),function(i){
 
 
 #' ### Venn Diagram
-grid.newpage()
-grid.draw(venn.diagram(list("SE_B6_vs_B5"=DE_SE_B6_B5,
-                            "SE_B6_vs_B7"=DE_SE_B7_B6,
-                            "ZE_B6_vs_B5"=DE_ZE_B6_B5,
-                            "ZE_B6_vs_B7"=DE_ZE_B7_B6),
-                       
-                       NULL,
-                       fill=pal[1:4]))
+
+{
+    venn_SZ_list <- list("SE_B6_vs_B5"=DE_SE_B6_B5,
+                         "SE_B7_vs_B6"=DE_SE_B7_B6,
+                         "ZE_B6_vs_B5"=DE_ZE_B6_B5,
+                         "ZE_B7_vs_B6"=DE_ZE_B7_B6)
+    
+    grid.newpage()
+    png(file=here(str_c("/analysis/DE/", "venn_SZ_B6vB5_B7vB6.png")),
+        width=1200, height=800)
+    grid.draw(venn.diagram(venn_SZ_list,
+                           NULL,
+                           fill=pal[1:4]))
+    dev.off()
+}
+
+
+
+venn_SZ_list <- venn(venn_SZ_list, show.plot = FALSE)
+### EXTRACT THE GENES THAT ARE IN THESE VENN INTERSECTS
+
+venn_SZ_list
+colnames(venn_SZ_list)
+rownames(venn_SZ_list)
+
+
+
+venn_SZ_genes <- attr(venn_SZ_list, "intersections")
+names(venn_SZ_genes)
+
+#Enrichment of venn_SZ_genes
+enr_venn_SZ_genes <- lapply(venn_SZ_genes[1:length(venn_SZ_genes)], function(x){
+    print(length(x))
+    if(length(x) > 1){
+        x <- str_replace(x,"[.]1","")
+        print(x)
+        gopher(x, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+    }else{
+        NULL
+    }
+})
+###SAVE VENN SZ ENR GENES
+names(enr_venn_SZ_genes) <- str_replace_all(names(enr_venn_SZ_genes), ":", "_intersecting_")
+names(enr_venn_SZ_genes) <- str_replace_all(names(enr_venn_SZ_genes), "B6_vs_B5", "EarlyOverlap")
+names(enr_venn_SZ_genes) <- str_replace_all(names(enr_venn_SZ_genes), "B7_vs_B6", "LateOverlap")
+
+enr2tsv(enr_venn_SZ_genes, file=paste0(here("/analysis/DE/SZ_Venn/"),"enrichedGenes"))
+
+#Plot all Venn Diagram Treemaps
+for(i in 1:length(enr_venn_SZ_genes)){
+    
+    x <- enr_venn_SZ_genes
+    a <- length(x[[i]])
+    dir <- "analysis/DE/SZ_Venn/"
+    
+    plotname <- names(x[i])
+    
+    if(a != 0){
+        print(plotname)
+        
+        #plot and save go treemap
+        if(is.null(nrow(x[[i]][[1]])) == FALSE){
+            png(file=here(str_c(dir, "go_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+            dev.off()
+            print("go")
+        }
+        
+        #plot and save mapman treemap
+        if(is.null(nrow(x[[i]][[2]])) == FALSE){
+            png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+                width=1000, height=700)
+            plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+            dev.off()
+            print("map")
+        }
+        
+    }
+}
+
+
+
+
+
+
+
+
 }
 
 #PLOTTING TREEMAPS OF SZ_TissueEffect

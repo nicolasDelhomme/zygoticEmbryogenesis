@@ -34,7 +34,7 @@ for(i in 1:length(Edgelist_FDN_genes_zf_fmg_vs_time_TFs)){
     g <- graph.edgelist(as.matrix(Edgelist_FDN_genes_zf_fmg_vs_time_TFs[[i]]), directed = FALSE)
     dir <- str_c("data/seidr/network/",nam)
     print(dir)
-    write.graph(g, here(str_c("data/seidr/network/",nam)), format = c("edgelist"))
+    write.graph(g, here(str_c("data/seidr/network/",nam)), format = c("ncol"))
   }
   if(i == length(Edgelist_FDN_genes_zf_fmg_vs_time_TFs)){
     nam <- str_c("zf_fmg_vs_time_TF_FDNs_unionifed_network")
@@ -51,7 +51,7 @@ for(i in 1:length(Edgelist_FDN_genes_zf_fmg_vs_time_TFs)){
     inter <- distinct(inter)
     inter <- as.matrix(inter)
     inter <- graph.edgelist(inter, directed = FALSE)
-    write.graph(inter, here(str_c("data/seidr/network/",nam)), format = c("edgelist"))
+    write.graph(inter, here(str_c("data/seidr/network/",nam)), format = c("ncol"))
   }
 }
 
@@ -78,6 +78,12 @@ Edgelist_FDN_genes_zf_ze_vs_time_TFs <- lapply(1:length(de_genes_zf_ze_vs_time_T
   return(edgeList %>% filter(V1 %in% unlist(de_genes_zf_ze_vs_time_TFs_Transition_with_FDN[i])))
 })
 
+Edgelist_FDN_genes_zf_ze_vs_time_TFs[[1]]
+
+
+graphtest <- graph.edgelist(as.matrix(Edgelist_FDN_genes_zf_ze_vs_time_TFs[[5]]), directed = FALSE)
+V(graphtest)
+
 #ZE vs Time TFs with FDN network assemblies
 for(i in 1:length(Edgelist_FDN_genes_zf_ze_vs_time_TFs)){
   if(nrow(Edgelist_FDN_genes_zf_ze_vs_time_TFs[[i]]) == 0){
@@ -88,7 +94,7 @@ for(i in 1:length(Edgelist_FDN_genes_zf_ze_vs_time_TFs)){
     g <- graph.edgelist(as.matrix(Edgelist_FDN_genes_zf_ze_vs_time_TFs[[i]]), directed = FALSE)
     dir <- str_c("data/seidr/network/",nam)
     print(dir)
-    write.graph(g, here(str_c("data/seidr/network/",nam)), format = c("edgelist"))
+    write.graph(g, here(str_c("data/seidr/network/",nam)), format = c("ncol"))
   }
   if(i == length(Edgelist_FDN_genes_zf_ze_vs_time_TFs)){
     nam <- str_c("zf_ze_vs_time_TF_FDNs_unionifed_network")
@@ -105,7 +111,7 @@ for(i in 1:length(Edgelist_FDN_genes_zf_ze_vs_time_TFs)){
     inter <- distinct(inter)
     inter <- as.matrix(inter)
     inter <- graph.edgelist(inter, directed = FALSE)
-    write.graph(inter, here(str_c("data/seidr/network/",nam)), format = c("edgelist"))
+    write.graph(inter, here(str_c("data/seidr/network/",nam)), format = c("ncol"))
   }
 }
 
@@ -141,7 +147,7 @@ for(i in 1:length(Edgelist_FDN_genes_zf_ze_vs_fmg_TFs)){
     g <- graph.edgelist(as.matrix(Edgelist_FDN_genes_zf_ze_vs_fmg_TFs[[i]]), directed = FALSE)
     dir <- str_c("data/seidr/network/",nam)
     print(dir)
-    write.graph(g, here(str_c("data/seidr/network/",nam)), format = c("edgelist"))
+    write.graph(g, here(str_c("data/seidr/network/",nam)), format = c("ncol"))
   }
   if(i == length(Edgelist_FDN_genes_zf_ze_vs_fmg_TFs)){
     nam <- str_c("zf_ze_vs_fmg_TF_FDNs_unionifed_network")
@@ -158,7 +164,7 @@ for(i in 1:length(Edgelist_FDN_genes_zf_ze_vs_fmg_TFs)){
     inter <- distinct(inter)
     inter <- as.matrix(inter)
     inter <- graph.edgelist(inter, directed = FALSE)
-    write.graph(inter, here(str_c("data/seidr/network/",nam)), format = c("edgelist"))
+    write.graph(inter, here(str_c("data/seidr/network/",nam)), format = c("ncol"))
   }
 }
 

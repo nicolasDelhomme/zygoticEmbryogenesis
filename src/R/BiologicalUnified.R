@@ -209,7 +209,15 @@ samplesSE_Germ <- subset(samples, samples$Experiment == "Somatic Embryogenesis G
   samples_SE_plus_ZE$Experiment <- factor(samples_SE_plus_ZE$Experiment)
   samples_SE_plus_ZE$Time <- factor(samples_SE_plus_ZE$Time)
   
+  samples_SE_plus_ZE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$NGI.ID != "P464_205")
+  samples_SE_plus_ZE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$NGI.ID != "P464_202")
+  samples_SE_plus_ZE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$NGI.ID != "P464_203")
+  samples_SE_plus_ZE <- subset(samples_SE_plus_ZE,samples_SE_plus_ZE$NGI.ID != "P464_204")
+  
+  
   counts_SE_plus_ZE <- cbind(countsZE_Final,countsSE)
+  counts_SE_plus_ZE <- counts_SE_plus_ZE[ ,samples_SE_plus_ZE$NGI.ID]
+  colnames(counts_SE_plus_ZE) == samples_SE_plus_ZE$NGI.ID
   }
   
   #TT Model Modification
@@ -227,7 +235,12 @@ samplesSE_Germ <- subset(samples, samples$Experiment == "Somatic Embryogenesis G
     samples.sz.ttmodel <- subset(samples.sz.ttmodel, samples.sz.ttmodel$Time != c("B10"))
     #do the removal after the model... Keep only times that are seen in both SE and ZE
     
+    #P464_205,202,203 removing these
     samples.sz.ttmodel <- subset(samples.sz.ttmodel,samples.sz.ttmodel$NGI.ID != "P464_205")
+    samples.sz.ttmodel <- subset(samples.sz.ttmodel,samples.sz.ttmodel$NGI.ID != "P464_202")
+    samples.sz.ttmodel <- subset(samples.sz.ttmodel,samples.sz.ttmodel$NGI.ID != "P464_203")
+    samples.sz.ttmodel <- subset(samples.sz.ttmodel,samples.sz.ttmodel$NGI.ID != "P464_204")
+    
     counts.sz.ttmodel <- counts_SE_plus_ZE
     counts.sz.ttmodel <- counts.sz.ttmodel[ ,samples.sz.ttmodel$NGI.ID]
     colnames(counts.sz.ttmodel) == samples.sz.ttmodel$NGI.ID
@@ -268,15 +281,16 @@ dir.create(here("analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
 write.csv(lb.g_ZE,file=here("analysis/salmon/ZE-ZF-unnormalised-gene-expression_data.csv"))
 
 #4Datasets
-samples_4sets <- bind_rows(samplesZE,samples29SEED,samplesSE_Germ,samplesSE)
-lb.g_4sets <- cbind(countsZE, counts29Seed, countsSE_Germ, countsSE)
+samples_4sets <- bind_rows(samplesZE_Final,samples29SEED,samplesSE_Germ,samplesSE)
+lb.g_4sets <- cbind(countsZE_Final, counts29Seed, countsSE_Germ, countsSE)
 #export
 dir.create(here("analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
 write.csv(lb.g_4sets,file=here("analysis/salmon/4Datasets-unnormalised-gene-expression_data.csv"))
 
+samplesZE_Final$Time
 #Combine ZE and 29Seed for Batch Correction
-samples_29z <- bind_rows(samplesZE,samples29SEED)
-lb.g_29z <- cbind(countsZE, counts29Seed)
+samples_29z <- bind_rows(samplesZE_Final,samples29SEED)
+lb.g_29z <- cbind(countsZE_Final, counts29Seed)
 #export
 dir.create(here("analysis","salmon"),showWarnings=FALSE,recursive=TRUE)
 write.csv(lb.g_29z,file=here("analysis/salmon/ZE-29Seed-unnormalised-gene-expression_data.csv"))
@@ -297,7 +311,13 @@ write.csv(lb.g_sz,file=here("analysis/salmon/ZE-SE-unnormalised-gene-expression_
 dds.ze <- DESeqDataSetFromMatrix(
   countData = lb.g_ZE,
   colData = samplesZE_Final,
-  design = ~ Tissue + Time + Tissue:Time)
+  design = ~ Tissue * Time)
+
+#removing B10
+dds.ze <- dds.ze[,dds.ze$Time!="B10"]
+dds.ze$Time <- droplevels(dds.ze$Time)
+
+
 save(dds.ze,file=here("analysis/salmon/ZE-ZF-Dataset-dds.rda"))
 
 #ZE vs 29Seed
@@ -341,19 +361,50 @@ dds.4sets
 dds.sz
 dds.sz.ttmodel
 
+
+
+dds.zev2 <- dds.ze[,dds.ze$Time!="B1"]
+dds.zev2 <- dds.zev2[,dds.zev2$Time!="B2"]
+dds.zev2 <- dds.zev2[,dds.zev2$Time!="B3"]
+
+dds.4sets$Time
+
+dds.29z[is.na(dds.29z$Time)]
+
+
+
+
+
+samples_29z$Time = factor(samples_29z$Time, levels=c(levels(samples_29z$Time), "NA"))
+samples_29z$Time[is.na(samples_29z$Time)] = "NA"
+
+dds.29z$Time = factor(dds.29z$Time, levels=c(levels(dds.29z$Time), "NA"))
+dds.29z$Time[is.na(dds.29z$Time)] = "NA"
+
+dds.29z <- dds.29z[,dds.29z$Time!="B10"]
+dds.29z$Time
+
 #' #ZE DATASET ONLY
 {
-dds.ze <- estimateSizeFactors(dds.ze)
-sizes <- sizeFactors(dds.ze)
+dds.zev2 <- estimateSizeFactors(dds.zev2)
+sizes <- sizeFactors(dds.zev2)
 pander(sizes)
 boxplot(sizes, main="Sequencing libraries size factor")
-vsd.ze <- varianceStabilizingTransformation(dds.ze, blind=TRUE)
+vsd.ze <- varianceStabilizingTransformation(dds.zev2, blind=TRUE)
 vst.ze <- assay(vsd.ze)
 vst.ze <- vst.ze - min(vst.ze)
 pc.ze <- prcomp(t(vst.ze))
+
+samplesZE_Final_v2 <- samplesZE_Final[samplesZE_Final$Time!="B10",]
+samplesZE_Final_v2 <- samplesZE_Final_v2[samplesZE_Final_v2$Time!="B1",]
+samplesZE_Final_v2 <- samplesZE_Final_v2[samplesZE_Final_v2$Time!="B2",]
+samplesZE_Final_v2 <- samplesZE_Final_v2[samplesZE_Final_v2$Time!="B3",]
+
 pc.dat.ze <- bind_cols(PC1=pc.ze$x[,1],
                     PC2=pc.ze$x[,2],
-                    samplesZE)
+                    samplesZE_Final_v2)
+
+
 ggplot(pc.dat.ze,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
@@ -366,6 +417,23 @@ interplot <- ggplot(pc.dat.ze,aes(x=PC1,y=PC2,col=Time,shape=Tissue,text=NGI.ID)
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
 ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
                                                 yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+
+
+ggplot(pc.dat.ze_no_S,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
+  geom_point(size=2) + 
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
+  scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
+  scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
+#' ### Interactive PCA Plot
+suppressPackageStartupMessages(library(plotly))
+interplot <- ggplot(pc.dat.ze_no_S,aes(x=PC1,y=PC2,col=Time,shape=Tissue,text=NGI.ID)) +
+  geom_point(size=2) +
+  ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
+ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+                                                yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+
+
+
 #' Filter for noise
 #' A cutoff at a VST value of 1 leaves about 32000 genes - is this adequate for the QA?
 conds.ze <- factor(paste(samplesZE$Tissue,samplesZE$Time))
@@ -403,8 +471,8 @@ vst.29z <- vst.29z - min(vst.29z)
 pc.29z <- prcomp(t(vst.29z))
 pc.dat.29z <- bind_cols(PC1=pc.29z$x[,1],
                     PC2=pc.29z$x[,2],
-                    samples_29z)
-ggplot(pc.dat.29z,aes(x=PC1,y=PC2,col=Time,shape=Tissue)) + 
+                    samples_29z[samples_29z$Time!="B10",])
+ggplot(pc.dat.29z,aes(x=PC1,y=PC2,col=Experiment,shape=Tissue)) + 
   geom_point(size=2) + 
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
   scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
@@ -423,7 +491,7 @@ sels.29z <- rangeFeatureSelect(counts=vst.29z,
                            conditions=conds.29z,
                            nrep=3)
 vstCutoff_29Z <- 4+1
-
+}
 #space for heatmap
 
 #end heatmap
@@ -432,7 +500,7 @@ vstCutoff_29Z <- 4+1
 {
   mat <- assay(vsd.29z)
   x=mat
-  colnames(x) <- dds$NGI.ID
+  colnames(x) <- dds.29z$NGI.ID
   x <- x[,-(48:64), drop = FALSE]
   x <- x[,-(1:21), drop = FALSE]
   ###clip off from x, column 21 and below
@@ -469,6 +537,32 @@ vstCutoff_29Z <- 4+1
   vst.29z <- vst.29z - min(vst.29z)
 }
 #batch correction should be completed - redo pca to look at the difference
+{
+  pc.29z <- prcomp(t(vst.29z))
+  pc.dat.29z <- bind_cols(PC1=pc.29z$x[,1],
+                          PC2=pc.29z$x[,2],
+                          samples_29z[samples_29z$Time!="B10",])
+  ggplot(pc.dat.29z,aes(x=PC1,y=PC2,col=Experiment,shape=Tissue)) + 
+    geom_point(size=2) + 
+    ggtitle("Principal Component Analysis",subtitle="variance stabilized counts") +
+    scale_x_continuous(name=element_text(paste("PC1 (",percent[1],"%)",sep=""))) +
+    scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
+  #' ### Interactive PCA Plot
+  suppressPackageStartupMessages(library(plotly))
+  interplot <- ggplot(pc.dat.29z,aes(x=PC1,y=PC2,col=Time,shape=Tissue,text=NGI.ID)) +
+    geom_point(size=2) +
+    ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
+  ggplotly(interplot, tooltip = "all") %>% layout(xaxis=list(title=paste("PC1 (",percent[1],"%)",sep="")),
+                                                  yaxis=list(title=paste("PC2 (",percent[2],"%)",sep="")))
+  #' Filter for noise
+  #' A cutoff at a VST value of 1 leaves about 32000 genes - is this adequate for the QA?
+  conds.29z <- factor(paste(samples_29z$Tissue,samples_29z$Time))
+  sels.29z <- rangeFeatureSelect(counts=vst.29z,
+                                 conditions=conds.29z,
+                                 nrep=3)
+  vstCutoff_29Z <- 4+1
+
+
 
 #end pca
 
@@ -518,6 +612,13 @@ heatmap.2(t(scale(t(vst.4sets[sels.4sets[[vstCutoff_4sets]],]))),
 
 
 }
+
+dds.sz <- dds.sz[,dds.sz$Time!="B0"]
+dds.sz <- dds.sz[,dds.sz$Time!="B10"]
+samples_sz <- samples_sz[samples_sz$Time!="B0",]
+samples_sz <- samples_sz[samples_sz$Time!="B10",]
+
+#P464_205,202,203
 
 #' #SZ EXPERIMENT MODEL
 {
@@ -577,7 +678,15 @@ vstCutoff_SZ <- 4+1
   vst.sz <- vsd.sz
   vst.sz <- vst.sz - min(vst.sz)
 
+  
+  
+  
 
+  dds.sz.ttmodel <- dds.sz.ttmodel[,dds.sz.ttmodel$Time!="B0"]
+  dds.sz.ttmodel <- dds.sz.ttmodel[,dds.sz.ttmodel$Time!="B10"]
+  samples.sz.ttmodel$Time
+  
+  
 #' #SZ TT MODEL
 {
 dds.sz.ttmodel <- estimateSizeFactors(dds.sz.ttmodel)
@@ -655,14 +764,17 @@ vst.sz.ttmodel <- vst.sz.ttmodel - min(vst.sz.ttmodel)
 
 #Gopher Enrichment
   {
-  metaDF <- data.frame(dds_SE_ZE$NGI.ID,dds_SE_ZE$Time,dds_SE_ZE$Tissue,dds_SE_ZE$Experiment)
+  metaDF <- data.frame(dds.sz$NGI.ID,dds.sz$Time,dds.sz$Tissue,dds.sz$Experiment)
   metaDF$NGI.ID <- as.character(metaDF$NGI.ID)
   colnames(metaDF) <- c("NGI.ID","Time","Tissue","Experiment")
-  D3Time <- plot3Dpca(t(vst_SE_ZE_featureselected), metaDF, c("Time"),colors = cust_colors, title="ZE vs SE batch corrected (Time)", inverse=c(FALSE,FALSE,FALSE))
-  D3Tissue <- plot3Dpca(t(vst_SE_ZE_featureselected), metaDF, c("Tissue"), title="ZE vs SE batch corrected (Tissue)", inverse=c(FALSE,FALSE,FALSE))
+  D3Time <- plot3Dpca(t(vst.sz), metaDF, c("Time"),colors = cust_colors, title="ZE vs SE batch corrected (Time)", inverse=c(FALSE,FALSE,FALSE))
+  D3Tissue <- plot3Dpca(t(vst.sz), metaDF, c("Tissue"), title="ZE vs SE batch corrected (Tissue)", inverse=c(FALSE,FALSE,FALSE))
   }
 
-got_pc <- get_pca(pc, element = c("var", "ind"))
+  pc.sz
+  
+  library("factoextra")
+got_pc <- get_pca(pc.sz, element = c("var", "ind"))
 top500 <- fviz_contrib(pc, choice = "var", axes = 1, top = 500)
 top50 <- fviz_contrib(pc, choice = "var", axes = 1, top = 50)
 toptop <- fviz_contrib(pc, choice = "var", axes = 1, top = 13346)
@@ -817,7 +929,6 @@ enr2noback$go$name
 enr3noback$go$name
 
 str_subset(enrnoback$go$name, enr3noback$go$name)
-
 
 
 samples_SE_plus_ZE$NGI.ID

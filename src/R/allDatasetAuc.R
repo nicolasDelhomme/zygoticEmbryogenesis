@@ -100,7 +100,7 @@ mar <- par("mar")
             col = hpal)
   
   par(mar=c(10.1,3.1,3.1,0.1))
-  linesplot(res,cols = colorRampPalette(c("blue","red"))(20),addboxes = TRUE,main="ZE",las=2)
+  linesplot(res,cols = colorRampPalette(c("blue","red"))(20),addboxes = TRUE,main="Seidr Network AUC",las=2)
   par(mar=mar)
   par(mar=c(10.1,4.1,3.1,2.1))
   plot(0,0,ylim=c(0,1),

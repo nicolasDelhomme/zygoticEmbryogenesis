@@ -401,6 +401,285 @@ de_genes_zf_ze_vs_time_TFs_Transition
 
 
 
+###searching TissueSpecificity for TFs
+#import FMG vs Time genes
+{
+{
+  FL_TS_ZF <- list.files(here("analysis/tissuespecificity/ZF"), 
+                           recursive = TRUE, 
+                           pattern = "tissueSpecificity",
+                           full.names = TRUE)
+  
+
+  FL_TS_ZF <- str_sort(FL_TS_ZF, numeric = TRUE)
+}
+#clip off the .1 off the gene ids
+tissuespecific_genes_zf <- sapply(1:length(FL_TS_ZF),function(i){
+  
+  GeneL <- read.csv(FL_TS_ZF[i])$x
+  GeneL <- as.character(GeneL)
+  GeneL <- str_replace(GeneL,"[.]1","")
+  
+  print(GeneL)
+  return(GeneL)
+})
+tissuespecific_genes_zf_names <- sapply(1:length(FL_TS_ZF), function(i){
+  a <- str_split(FL_TS_ZF, "ZF_")[[i]][2]
+  a <- str_replace(a, ".csv","")
+  return(a)
+})
+names(tissuespecific_genes_zf) <- tissuespecific_genes_zf_names
+
+#compare them to TF baselist
+tissuespecific_genes_zf_TFs <- sapply(1:length(FL_TS_ZF),function(i){
+  print(names(tissuespecific_genes_zf)[i])
+  x <- intersect(unlist(tissuespecific_genes_zf[i]),TF_Baselist)
+  print(x)
+  return(x)
+})
+names(tissuespecific_genes_zf_TFs) <- names(tissuespecific_genes_zf)
+
+tissuespecific_genes_zf_TFs
+for(i in 1:length(names(tissuespecific_genes_zf_TFs))){
+  print(tissuespecific_genes_zf_TFs[i])
+  write.csv(tissuespecific_genes_zf_TFs[i], file=here(str_c("analysis/TFs/tissuespecific_genes_zf_",names(tissuespecific_genes_zf_TFs)[i],"_TFs.csv")))
+}
+}
+
+
+
+###searching TissueSpecificity for TFs
+#import FMG vs Time genes
+{
+  {
+    FL_TS_SZ <- list.files(here("analysis/tissuespecificity/SZ"), 
+                           recursive = TRUE, 
+                           pattern = "tissueSpecificity",
+                           full.names = TRUE)
+    
+    
+    FL_TS_SZ <- str_sort(FL_TS_SZ, numeric = TRUE)
+  }
+  #clip off the .1 off the gene ids
+  tissuespecific_genes_sz <- sapply(1:length(FL_TS_SZ),function(i){
+    
+    GeneL <- read.csv(FL_TS_SZ[i])$x
+    GeneL <- as.character(GeneL)
+    GeneL <- str_replace(GeneL,"[.]1","")
+    
+    print(GeneL)
+    return(GeneL)
+  })
+  tissuespecific_genes_sz_names <- sapply(1:length(FL_TS_SZ), function(i){
+    a <- str_split(FL_TS_SZ, "SZ_")[[i]][2]
+    a <- str_replace(a, ".csv","")
+    return(a)
+  })
+  names(tissuespecific_genes_sz) <- tissuespecific_genes_sz_names
+  
+  #compare them to TF baselist
+  tissuespecific_genes_sz_TFs <- sapply(1:length(FL_TS_SZ),function(i){
+    print(names(tissuespecific_genes_sz)[i])
+    x <- intersect(unlist(tissuespecific_genes_sz[i]),TF_Baselist)
+    print(x)
+    return(x)
+  })
+  names(tissuespecific_genes_sz_TFs) <- names(tissuespecific_genes_sz)
+  
+  tissuespecific_genes_sz_TFs
+  for(i in 1:length(names(tissuespecific_genes_sz_TFs))){
+    print(tissuespecific_genes_sz_TFs[i])
+    write.csv(tissuespecific_genes_sz_TFs[i], file=here(str_c("analysis/TFs/tissuespecific_genes_sz_",names(tissuespecific_genes_sz_TFs)[i],"_TFs.csv")))
+  }
+}
+
+
+
+#search what clusters have these genes
+
+#ZF_FMG_Time
+de_genes_zf_fmg_vs_time_TFs_Transition
+topClusters
+
+for(i in 1:length(de_genes_zf_fmg_vs_time_TFs_Transition)){
+  
+
+  #devel, trying to put this stuff into a list
+  b <- sapply(1:length(topClusters), function(j){
+    a <- intersect(unlist(topClusters[[j]]), unlist(de_genes_zf_fmg_vs_time_TFs_Transition[i]))
+    
+    if(length(a) > 0){
+      print(i)
+      print(names(topClusters[j]))
+      print(a)
+      out <- a
+      return(out)
+      }
+    
+  })
+  
+  print(b)
+  
+}
+
+#devel
+for(j in 1:length(topClusters)){
+  a <- intersect(unlist(topClusters[[j]]), unlist(de_genes_zf_fmg_vs_time_TFs_Transition[i]))
+  
+  if(length(a) > 0){
+    print(i)
+    print(names(topClusters[j]))
+    print(a)
+  }
+}
+
+
+
+
+#ZF_ZE_Time
+#ZF_TissueEffect
+
+#SZ_SE_Time
+#SZ_ZE_Time
+#SZ_TissueEffect
+
+#TS_SZ
+#TS_ZF
+
+
+for(i in 1:length(de_genes_zf_fmg_vs_time_TFs_FDN)){
+  if(is.null(de_genes_zf_fmg_vs_time_TFs_FDN[[i]])){
+    #if null is true
+    #nothing
+  }else{
+    #if null is false
+    #write.csv(de_genes_zf_fmg_vs_time_TFs_FDN, file=here("analysis/ZE_FMG_PC1_TFs.tsv"))
+    
+  }
+  
+}
+de_genes_zf_fmg_vs_time_TFs_FDN[[1]][,1]
+
+
+#Enrichment of TF_FMG_Time_FDN
+enr_ZF_TF_FMG_Time_FDN_genes <- sapply(1:length(de_genes_zf_fmg_vs_time_TFs_FDN), function(x){
+  
+  #enriching FDNs of the TFs from a specific B# vs B#
+  g <- de_genes_zf_fmg_vs_time_TFs_FDN[[x]][,1]
+  lg <- length(g)
+  print(lg)
+
+    if(lg > 1){
+      print(g)
+      gopher(g, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+    }else{
+      NULL
+  }
+})
+###SAVE VENN SZ ENR GENES
+for(i in 1:length(enr_ZF_TF_FMG_Time_FDN_genes)){
+  print(i)
+  names(enr_ZF_TF_FMG_Time_FDN_genes)[i] <- str_c("de_genes_zf_fmg_vs_time_B",i+1,"_vs_B",i,"_TFs_FDN")
+}
+
+enr2tsv(enr_ZF_TF_FMG_Time_FDN_genes, file=paste0(here("/analysis/TFs/"),"enrichedGenes"))
+
+
+#plot treemaps for all enrichments
+for(i in 1:length(enr_ZF_TF_FMG_Time_FDN_genes)){
+  
+  x <- enr_ZF_TF_FMG_Time_FDN_genes
+  a <- length(x[[i]])
+  dir <- "analysis/TFs/FMG_Time_FDN/"
+  
+  plotname <- names(x[i])
+  
+  if(a != 0){
+    print(plotname)
+    
+    #plot and save go treemap
+    if(is.null(nrow(x[[i]][[1]])) == FALSE){
+      png(file=here(str_c(dir, "go_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+      dev.off()
+      print("go")
+    }
+    
+    #plot and save mapman treemap
+    if(is.null(nrow(x[[i]][[2]])) == FALSE){
+      png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+      dev.off()
+      print("map")
+    }
+    
+  }
+}
+
+
+
+
+
+
+
+
+enr_ZF_TF_ZE_Time_FDN_genes <- sapply(1:length(de_genes_zf_ze_vs_time_TFs_FDN), function(x){
+  
+  #enriching FDNs of the TFs from a specific B# vs B#
+  g <- de_genes_zf_ze_vs_time_TFs_FDN[[x]][,1]
+  lg <- length(g)
+  print(lg)
+  
+  if(lg > 1){
+    print(g)
+    gopher(g, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+  }else{
+    NULL
+  }
+})
+###SAVE VENN SZ ENR GENES
+for(i in 1:length(enr_ZF_TF_ZE_Time_FDN_genes)){
+  print(i)
+  names(enr_ZF_TF_ZE_Time_FDN_genes)[i] <- str_c("de_genes_zf_ze_vs_time_B",i+1,"_vs_B",i,"_TFs_FDN")
+}
+
+enr2tsv(enr_ZF_TF_ZE_Time_FDN_genes, file=paste0(here("/analysis/TFs/"),"enrichedGenes"))
+
+
+#plot treemaps for all enrichments
+for(i in 1:length(enr_ZF_TF_ZE_Time_FDN_genes)){
+  
+  x <- enr_ZF_TF_ZE_Time_FDN_genes
+  a <- length(x[[i]])
+  dir <- "analysis/TFs/ZE_Time_FDN/"
+  
+  plotname <- names(x[i])
+  
+  if(a != 0){
+    print(plotname)
+    
+    #plot and save go treemap
+    if(is.null(nrow(x[[i]][[1]])) == FALSE){
+      png(file=here(str_c(dir, "go_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+      dev.off()
+      print("go")
+    }
+    
+    #plot and save mapman treemap
+    if(is.null(nrow(x[[i]][[2]])) == FALSE){
+      png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+      dev.off()
+      print("map")
+    }
+    
+  }
+}
 
 
 
@@ -411,6 +690,81 @@ de_genes_zf_ze_vs_time_TFs_Transition
 
 
 
+enr_ZF_TF_ZE_vs_FMG_FDN_genes <- sapply(1:length(de_genes_zf_ze_vs_fmg_TFs_FDN), function(x){
+  
+  #enriching FDNs of the TFs from a specific B# vs B#
+  g <- de_genes_zf_ze_vs_fmg_TFs_FDN[[x]][,1]
+  lg <- length(g)
+  print(lg)
+  
+  if(lg > 1){
+    print(g)
+    gopher(g, task = list('go', 'mapman'), background = NULL, url="pabies", alpha = 0.05)
+  }else{
+    NULL
+  }
+})
+###SAVE VENN SZ ENR GENES
+for(i in 1:length(enr_ZF_TF_ZE_vs_FMG_FDN_genes)){
+  print(i)
+  names(enr_ZF_TF_ZE_vs_FMG_FDN_genes)[i] <- str_c("de_genes_zf_ze_vs_fmg_B",i,"_TFs_FDN")
+}
+
+enr2tsv(enr_ZF_TF_ZE_vs_FMG_FDN_genes, file=paste0(here("/analysis/TFs/"),"enrichedGenes"))
+
+
+#plot treemaps for all enrichments
+for(i in 1:length(enr_ZF_TF_ZE_vs_FMG_FDN_genes)){
+  
+  x <- enr_ZF_TF_ZE_vs_FMG_FDN_genes
+  a <- length(x[[i]])
+  dir <- "analysis/TFs/ZE_vs_FMG_FDN/"
+  
+  plotname <- names(x[i])
+  
+  if(a != 0){
+    print(plotname)
+    
+    #plot and save go treemap
+    if(is.null(nrow(x[[i]][[1]])) == FALSE){
+      png(file=here(str_c(dir, "go_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "go", namespace = "none")
+      dev.off()
+      print("go")
+    }
+    
+    #plot and save mapman treemap
+    if(is.null(nrow(x[[i]][[2]])) == FALSE){
+      png(file=here(str_c(dir ,"mapman_",plotname, ".png")),
+          width=1000, height=700)
+      plotEnrichedTreemap(x[[i]], enrichment = "mapman", clusterColor = "#1B75BC")
+      dev.off()
+      print("map")
+    }
+    
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+#many many TFs are found - need to #1 look at up and down, #2 figure out which clusters, #3 find transitions
+
+
+#new test with FDN TF finding, get a better link
+#TFs from time points
+
+#FDN, then FDN that FDN of every gene, compare to TFs in next time point - this gives us a 1 step intermediate.
+#OR FDN, and compare with next time point FDN, should give us overlaps. Then filter only genes that are from TF Baselist
 
 
 
