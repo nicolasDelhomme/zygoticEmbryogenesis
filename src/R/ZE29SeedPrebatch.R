@@ -380,35 +380,41 @@ load(here("analysis/salmon/ZE-29Seed-dds.rda"))
 load(here("analysis/salmon/ZE-SE-dds.rda"))
 load(here("analysis/salmon/ZvsS-B4-B6-TTModel-dds.rda"))
 
-suppressPackageStartupMessages(library(sva))
-suppressPackageStartupMessages(library(bladderbatch))
-suppressPackageStartupMessages(library(pamr))
-suppressPackageStartupMessages(library(limma))
+suppressPackageStartupMessages({
+  library(sva)
+  library(bladderbatch)
+  library(pamr)
+  library(limma)
+  library(convert)
+  library(Biobase)
+  library(edgeR)
+})
 
-library(convert)
-library(Biobase)
-require(Biobase)
 source(here("src/R/ComBat-seq-master/ComBat_seq.R"))
 source(here("src/R/ComBat-seq-master/helper_seq.R"))
-library(edgeR)
+source(here("UPSCb-common/src/R/percentile.R"))
+
 #' ## Normalisation for visualisation
 #' the normalisation is aware to take advantage of the model to determine the dispersion
 #' 
 #' ZE and 29Seed First, SE and ZE after
-vsd <- varianceStabilizingTransformation(dds,blind=FALSE)
+vsd <- varianceStabilizingTransformation(dds.29z,blind=FALSE)
 vst <- assay(vsd)
 vst <- vst - min(vst)
 
-vsd_SE_ZE <- varianceStabilizingTransformation(dds_SE_ZE,blind=FALSE)
+vsd.29z <- varianceStabilizingTransformation(dds.29z,blind=FALSE)
+vst.29z <- assay(vsd.29z)
+vst.29z <- vst.29z - min(vst.29z)
+
+
+
+vsd_SE_ZE <- varianceStabilizingTransformation(dds.sz,blind=FALSE)
 vst_SE_ZE <- assay(vsd_SE_ZE)
 vst_SE_ZE <- vst_SE_ZE - min(vst_SE_ZE)
 
 vsd.sz.ttmodel <- varianceStabilizingTransformation(dds.sz.ttmodel,blind=FALSE)
 vst.sz.ttmodel <- assay(vsd.sz.ttmodel)
 vst.sz.ttmodel <- vst.sz.ttmodel - min(vst.sz.ttmodel)
-
-#limma
-source(here("UPSCb-common/src/R/percentile.R"))
 
 #using ZE and 29Seed first, to get the batch effect
 ###mad is vsd_adjusted
@@ -433,12 +439,12 @@ samples$Time
 ###trim the samples to remove the samples that are below B8, maybe remove above B10.
 {
 x=mat
-colnames(x) <- dds$NGI.ID
+colnames(x) <- dds.29z$NGI.ID
 x <- x[,-(48:64), drop = FALSE]
 x <- x[,-(1:21), drop = FALSE]
 ###clip off from x, column 21 and below
 ###then, clip off 48 to 65. Keep the rest.
-batch = vsd_adjusted$Experiment
+batch = dds.29z$Experiment
 batch <- batch[-(48:64)]
 batch <- batch[-(1:21)]
 length(batch)
@@ -483,7 +489,8 @@ samplesfinal <- samples_SE_plus_ZE
 #' ### 2D
 pc.dat <- bind_cols(PC1=pc$x[,1],
                     PC2=pc$x[,2],
-                    samplesfinal)
+                    as.data.frame(colData(dds.29z)))
+                    #samplesfinal)
 
 ggplot(pc.dat,aes(x=PC1,y=PC2,col=Tissue,shape=Tissue)) + 
   geom_point(size=2) + 
