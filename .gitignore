@@ -60,7 +60,7 @@ analysis/
 *.csv
 
 #htmls
-*.html
+#*.html
 
 #.rda
 *.rda

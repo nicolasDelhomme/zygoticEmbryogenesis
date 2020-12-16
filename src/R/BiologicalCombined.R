@@ -1,6 +1,6 @@
 #' ---
-#' title: "T89 and _Laccaria bicolor_ Biological QA - January data"
-#' author: "Nicolas Delhomme && Iryna Shutava"
+#' title: "All SE and ZE datasets combined"
+#' author: "Nicolas Delhomme && Michael Stewart"
 #' date: "`r Sys.Date()`"
 #' output:
 #'  html_document:
@@ -11,19 +11,21 @@
 
 
 #' * Libraries
-suppressPackageStartupMessages(library(data.table))
-suppressPackageStartupMessages(library(DESeq2))
-suppressPackageStartupMessages(library(gplots))
-suppressPackageStartupMessages(library(hyperSpec))
-suppressPackageStartupMessages(library(parallel))
-suppressPackageStartupMessages(library(pander))
-suppressPackageStartupMessages(library(plotly))
-suppressPackageStartupMessages(library(RColorBrewer))
-suppressPackageStartupMessages(library(scatterplot3d))
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(tximport))
-suppressPackageStartupMessages(library(vsn))
-suppressPackageStartupMessages(library(here))
+suppressPackageStartupMessages({
+  library(data.table)
+  library(DESeq2)
+  library(gplots)
+  library(hyperSpec)
+  library(parallel)
+  library(pander)
+  library(plotly)
+  library(RColorBrewer)
+  library(scatterplot3d)
+  library(tidyverse)
+  library(tximport)
+  library(vsn)
+  library(here)
+})
 
 #' * Helper functions
 source(here("UPSCb-common/src/R/plot.multidensity.R"))
@@ -368,8 +370,6 @@ ggplot(pc.dat,aes(x=PC1,y=PC2,col=Tissue,shape=Experiment)) +
   scale_y_continuous(name=element_text(paste("PC2 (",percent[2],"%)",sep="")))
 
 #' ### Interactive PCA Plot
-suppressPackageStartupMessages(library(plotly))
-
 interplot <- ggplot(pc.dat,aes(x=PC1,y=PC2,col=Tissue,shape=Experiment,text=NGI.ID)) +
   geom_point(size=2) +
   ggtitle("Principal Component Analysis",subtitle="variance stabilized counts")
