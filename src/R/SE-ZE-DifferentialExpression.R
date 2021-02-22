@@ -141,8 +141,8 @@ GO <- lapply(lapply(list(rownames(ZSD),rownames(ZSM)),
 
 #' # Export
 dir.create(here("analysis/limma"),showWarnings=FALSE)  
-write_delim(ZSD,here("analysis/limma/ZE-vs-SE-desiccation_DE-results.tsv"))
-write_delim(ZSM,here("analysis/limma/ZE-vs-SE-maturation_DE-results.tsv"))
+write_delim(ZSD %>% rownames_to_column("ID"),here("analysis/limma/ZE-vs-SE-desiccation_DE-results.tsv"))
+write_delim(ZSM %>% rownames_to_column("ID"),here("analysis/limma/ZE-vs-SE-maturation_DE-results.tsv"))
 write_delim(GO[[1]]$go,here("analysis/limma/ZE-vs-SE-desiccation_DE_GO-results.tsv"))
 write_delim(GO[[2]]$go,here("analysis/limma/ZE-vs-SE-maturation_DE_GO-results.tsv"))
 write_delim(GO[[1]]$go[,c("id","padj")],here("analysis/limma/ZE-vs-SE-desiccation_DE_GO-for-REVIGO-results.tsv"))
