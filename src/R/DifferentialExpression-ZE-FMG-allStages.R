@@ -18,6 +18,9 @@ suppressPackageStartupMessages(library(pander))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(vsn))
 suppressPackageStartupMessages(library(here))
+suppressPackageStartupMessages(library(BiocParallel))
+
+register(MulticoreParam(2))
 
 #' Function for selecting significant genes (FDR < 0.01, |log2FC| => 0.5)
 sigDeg <- function(res, p = 0.01, log2fc = 0.5, genes = "all") {
@@ -64,7 +67,7 @@ legend("topleft", fill = c("black", "grey", "lightblue"),legend = c("raw count >
 
 
 #' # Differential expression analysis
-# dds <- DESeq(dds)
+# dds <- DESeq(dds, parallel = TRUE)
 # message after running function DESeq:  
 # estimating size factors
 # estimating dispersions
@@ -102,8 +105,8 @@ alpha = 0.01
 dds <- ddsClean
 resultsNames(dds)
 
-B2.S_B1.S <- results(dds, name = "Time_B2_vs_B1", alpha = alpha, filter = rowMedians(counts(dds)))
-B3.S_B2.S <- results(dds, contrast = list("Time_B3_vs_B1", "Time_B2_vs_B1"), alpha = alpha, filter = rowMedians(counts(dds)))
+B2.S_B1.S <- results(dds, name = "Time_B2_vs_B1", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B3.S_B2.S <- results(dds, contrast = list("Time_B3_vs_B1", "Time_B2_vs_B1"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
 
 #' ### Select and count significant DE genes
 # All
@@ -168,13 +171,12 @@ names(genes_S_all) <- names(group_S_all)
 #' ## FMG B4-B9
 #' ### Extract results
 
-
-B4.FMG_B3.S <- results(dds, contrast = c("Time", "B4", "B3"), alpha = alpha, filter = rowMedians(counts(dds)))
-B5.FMG_B4.FMG <- results(dds, contrast = c("Time", "B5", "B4"), alpha = alpha, filter = rowMedians(counts(dds)))
-B6.FMG_B5.FMG <- results(dds, contrast = c("Time", "B6", "B5"), alpha = alpha, filter = rowMedians(counts(dds)))
-B7.FMG_B6.FMG <- results(dds, contrast = c("Time", "B7", "B6"), alpha = alpha, filter = rowMedians(counts(dds)))
-B8.FMG_B7.FMG <- results(dds, contrast = c("Time", "B8", "B7"), alpha = alpha, filter = rowMedians(counts(dds)))
-B9.FMG_B8.FMG <- results(dds, contrast = c("Time", "B9", "B8"), alpha = alpha, filter = rowMedians(counts(dds)))
+B4.FMG_B3.S <- results(dds, contrast = c("Time", "B4", "B3"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B5.FMG_B4.FMG <- results(dds, contrast = c("Time", "B5", "B4"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B6.FMG_B5.FMG <- results(dds, contrast = c("Time", "B6", "B5"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B7.FMG_B6.FMG <- results(dds, contrast = c("Time", "B7", "B6"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B8.FMG_B7.FMG <- results(dds, contrast = c("Time", "B8", "B7"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B9.FMG_B8.FMG <- results(dds, contrast = c("Time", "B9", "B8"), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
 
 #' ### Select significant DE genes
 FMGcompStage <- c(B4.FMG_B3.S, B5.FMG_B4.FMG, B6.FMG_B5.FMG, B7.FMG_B6.FMG, B8.FMG_B7.FMG, B9.FMG_B8.FMG) ###############  why can't I provide it instead of a name of every object?
@@ -237,12 +239,12 @@ names(genes_FMG_all) <- FMGcompStage_names
 
 #' ## ZE B4-B9
 #' ### Extract results
-B4.ZE_B3.S <- results(dds, contrast = list(c("Time_B4_vs_B1", "TissueZE.TimeB4"), c("Time_B3_vs_B1", "TissueZE.TimeB3")), alpha = alpha, filter = rowMedians(counts(dds)))
-B5.ZE_B4.ZE <- results(dds, contrast = list(c("Time_B5_vs_B1", "TissueZE.TimeB5"), c("Time_B4_vs_B1", "TissueZE.TimeB4")), alpha = alpha, filter = rowMedians(counts(dds)))
-B6.ZE_B5.ZE <- results(dds, contrast = list(c("Time_B6_vs_B1", "TissueZE.TimeB6"), c("Time_B5_vs_B1", "TissueZE.TimeB5")), alpha = alpha, filter = rowMedians(counts(dds)))
-B7.ZE_B6.ZE <- results(dds, contrast = list(c("Time_B7_vs_B1", "TissueZE.TimeB7"), c("Time_B6_vs_B1", "TissueZE.TimeB6")), alpha = alpha, filter = rowMedians(counts(dds)))
-B8.ZE_B7.ZE <- results(dds, contrast = list(c("Time_B8_vs_B1", "TissueZE.TimeB8"), c("Time_B7_vs_B1", "TissueZE.TimeB7")), alpha = alpha, filter = rowMedians(counts(dds)))
-B9.ZE_B8.ZE <- results(dds, contrast = list(c("Time_B9_vs_B1", "TissueZE.TimeB9"), c("Time_B8_vs_B1", "TissueZE.TimeB8")), alpha = alpha, filter = rowMedians(counts(dds)))
+B4.ZE_B3.S <- results(dds, contrast = list(c("Time_B4_vs_B1", "TissueZE.TimeB4"), c("Time_B3_vs_B1", "TissueZE.TimeB3")), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B5.ZE_B4.ZE <- results(dds, contrast = list(c("Time_B5_vs_B1", "TissueZE.TimeB5"), c("Time_B4_vs_B1", "TissueZE.TimeB4")), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B6.ZE_B5.ZE <- results(dds, contrast = list(c("Time_B6_vs_B1", "TissueZE.TimeB6"), c("Time_B5_vs_B1", "TissueZE.TimeB5")), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B7.ZE_B6.ZE <- results(dds, contrast = list(c("Time_B7_vs_B1", "TissueZE.TimeB7"), c("Time_B6_vs_B1", "TissueZE.TimeB6")), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B8.ZE_B7.ZE <- results(dds, contrast = list(c("Time_B8_vs_B1", "TissueZE.TimeB8"), c("Time_B7_vs_B1", "TissueZE.TimeB7")), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B9.ZE_B8.ZE <- results(dds, contrast = list(c("Time_B9_vs_B1", "TissueZE.TimeB9"), c("Time_B8_vs_B1", "TissueZE.TimeB8")), alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
 
 #' ### Select significant DE genes
 ZEcompStage <- c(B4.ZE_B3.S, B5.ZE_B4.ZE, B6.ZE_B5.ZE, B7.ZE_B6.ZE, B8.ZE_B7.ZE, B9.ZE_B8.ZE) ###############  why can't I provide it instead of a name of every object?
@@ -305,12 +307,12 @@ names(genes_ZE_all) <- ZEcompStage_names
 
 #' ## ZE vs FMG B4-B9
 #' ### Extract results
-B4.ZE_B4.FMG <- results(dds, name = "TissueZE.TimeB4", alpha = alpha, filter = rowMedians(counts(dds)))
-B5.ZE_B5.FMG <- results(dds, name = "TissueZE.TimeB5", alpha = alpha, filter = rowMedians(counts(dds)))
-B6.ZE_B6.FMG <- results(dds, name = "TissueZE.TimeB6", alpha = alpha, filter = rowMedians(counts(dds)))
-B7.ZE_B7.FMG <- results(dds, name = "TissueZE.TimeB7", alpha = alpha, filter = rowMedians(counts(dds)))
-B8.ZE_B8.FMG <- results(dds, name = "TissueZE.TimeB8", alpha = alpha, filter = rowMedians(counts(dds)))
-B9.ZE_B9.FMG <- results(dds, name = "TissueZE.TimeB9", alpha = alpha, filter = rowMedians(counts(dds)))
+B4.ZE_B4.FMG <- results(dds, name = "TissueZE.TimeB4", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B5.ZE_B5.FMG <- results(dds, name = "TissueZE.TimeB5", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B6.ZE_B6.FMG <- results(dds, name = "TissueZE.TimeB6", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B7.ZE_B7.FMG <- results(dds, name = "TissueZE.TimeB7", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B8.ZE_B8.FMG <- results(dds, name = "TissueZE.TimeB8", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
+B9.ZE_B9.FMG <- results(dds, name = "TissueZE.TimeB9", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE)
 
 #' ### Select significant DE genes
 ZEFMGcompStage <- c(B4.ZE_B4.FMG, B5.ZE_B5.FMG, B6.ZE_B6.FMG, B7.ZE_B7.FMG, B8.ZE_B8.FMG, B9.ZE_B9.FMG) ###############  why can't I provide it instead of a name of every object?
@@ -372,7 +374,7 @@ names(genes_ZEFMG_all) <- ZEFMGcompStage_names
 
 #' ## ZE vs FMG, regardless time  
 #' ### Extract results
-ZE_FMG <- results(dds, name = "Tissue_ZE_vs_FMG", alpha = alpha, filter = rowMedians(counts(dds))) 
+ZE_FMG <- results(dds, name = "Tissue_ZE_vs_FMG", alpha = alpha, filter = rowMedians(counts(dds)), parallel = TRUE) 
 
 #' ### Select significant DE genes  
 genes_ZE_FMG_all <- nrow(sigDeg(ZE_FMG, genes = "all"))
@@ -388,7 +390,17 @@ genes_ZE_FMG_all
 save(genes_S_all, genes_FMG_all, genes_ZE_all, genes_ZEFMG_all, 
      file = file.path(DEout, "filteredDEGsInZE_all_one-percent-FDR-05-log2fc-cutoff.rda"))
 save(genes_S_up, genes_S_down, genes_FMG_up, genes_FMG_down, genes_ZE_up, genes_ZE_down, genes_ZEFMG_up, genes_ZEFMG_down, 
-     file = file.path(DEout, "filteredDEGsInZE_UpAndDown_one-percent-FDR-05-log2fc-cutoff.rda"))
+     file = file.path(DEout, "filteredDEGsInZE_UpAndDown_one-percent-FDR-05-log2fc-cutoff.rda")) 
+#' Save objects with DEGs, not filtered by padj and lfc; add also the intercept  
+# get the intercept
+resIntercept <- results(dds, name = "Intercept", alpha = alpha, filter = rowMedians(counts(dds)))
+
+save(resIntercept, 
+     B2.S_B1.S, B3.S_B2.S, 
+     B4.FMG_B3.S, B5.FMG_B4.FMG, B6.FMG_B5.FMG, B7.FMG_B6.FMG, B8.FMG_B7.FMG, B9.FMG_B8.FMG, 
+     B4.ZE_B3.S, B5.ZE_B4.ZE, B6.ZE_B5.ZE, B7.ZE_B6.ZE, B8.ZE_B7.ZE, B9.ZE_B8.ZE,
+     B4.ZE_B4.FMG, B5.ZE_B5.FMG, B6.ZE_B6.FMG, B7.ZE_B7.FMG, B8.ZE_B8.FMG, B9.ZE_B9.FMG, 
+     file = file.path(DEout, "notfilteredDEGs.rda"))
 
 #' # Figures  
 #' ## DEGs in S comparing consecutive stages of the same tissue
