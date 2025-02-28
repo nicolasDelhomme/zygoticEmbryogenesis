@@ -15,7 +15,7 @@ Somatic embryogenesis (SE) is a powerful model system for studying embryo develo
 
 ## Citation
 
-This repository: 
+This repository: [![DOI](https://zenodo.org/badge/940495767.svg)](https://doi.org/10.5281/zenodo.14944673)
 
 ## Setup
 ```{bash setup, eval=FALSE}
