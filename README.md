@@ -4,7 +4,7 @@ Spruce zygotic embryogenesis
 ## Setup
 ```{bash setup, eval=FALSE}
 ln -s /mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series data
-/mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series/analysis analysis
+ln -s /mnt/picea/projects/spruce/uegertsdotter/ZE-developmental-series/analysis analysis
 ```
 
 ## Differential expression of genes in zygotic embryogenesis (Katja)
